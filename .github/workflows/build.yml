@@ -1,4 +1,7 @@
-# Builds the mod for Fabric, NeoForge and Forge and keeps the three jars as an artifact.
+# Builds the mod for Fabric, NeoForge and Forge and keeps the three jars as an artifact. On a push to main, or when
+# started by hand, it also publishes a GitHub release for a version that has none yet: tag
+# v<mod_version>+<minecraft_version> (from gradle.properties, e.g. v1.0.0+26.3), the three jars, and that version's
+# section of CHANGELOG.md as notes. Raising mod_version is all a new release takes.
 name: Build
 
 on:
@@ -13,6 +16,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -35,3 +40,38 @@ jobs:
         with:
           name: tutorial-tracker-jars
           path: dist/*.jar
+      - name: Version
+        id: version
+        run: |
+          mod=$(grep '^mod_version=' gradle.properties | cut -d= -f2 | tr -d '\r')
+          mc=$(grep '^minecraft_version=' gradle.properties | cut -d= -f2 | tr -d '\r')
+          tag="v${mod}+${mc}"
+          echo "mod=$mod" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          wanted=false
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.ref }}" = "refs/heads/main" -a "${{ github.event_name }}" = "push" ]; then
+            wanted=true
+          fi
+          if [ "$wanted" = true ] && ! git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "Version $tag has no release yet: publishing one."
+          else
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Release notes
+        if: steps.version.outputs.release == 'true'
+        run: |
+          # The section of CHANGELOG.md for this version.
+          awk -v v="${{ steps.version.outputs.mod }}" '
+            /^## / { if (found) exit; if (index($0, "[" v "]")) { found = 1; next } }
+            found { print }' CHANGELOG.md > notes.md
+          test -s notes.md || echo "Tutorial Tracker ${{ steps.version.outputs.mod }}" > notes.md
+          cat notes.md
+      - uses: softprops/action-gh-release@v3
+        if: steps.version.outputs.release == 'true'
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Tutorial Tracker ${{ steps.version.outputs.tag }}
+          body_path: notes.md
+          files: dist/*.jar

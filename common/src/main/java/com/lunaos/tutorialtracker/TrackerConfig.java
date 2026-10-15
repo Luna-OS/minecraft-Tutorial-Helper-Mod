@@ -12,17 +12,20 @@ public final class TrackerConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public boolean hudVisible = true;
-    /** Material list on the right side of the screen instead of the left. */
-    public boolean hudRight = false;
+    /** Where the material list window is, in GUI coordinates; -1 until the player moves it. */
+    public int listX = -1;
+    public int listY = -1;
+    public int listWidth = 170;
     public boolean hideDone = false;
+    /** How many materials the list window shows. */
     public int hudRows = 10;
     /** Also count what the player carries, not only the assigned containers. */
     public boolean countInventory = true;
     public boolean videoInHud = true;
-    /** 0 top left, 1 top right, 2 bottom left, 3 bottom right. */
-    public int videoCorner = 1;
-    /** 0 small, 1 medium, 2 large. */
-    public int videoSize = 1;
+    /** Where the video window is, in GUI coordinates; -1 until the player moves it. */
+    public int videoX = -1;
+    public int videoY = -1;
+    public int videoWidth = 192;
     /** Highest video height fetched: 360, 480, 720. */
     public int videoQuality = 480;
     public float volume = 0.8f;
@@ -47,10 +50,22 @@ public final class TrackerConfig {
             config.activeProject = "";
         }
         config.hudRows = Math.clamp(config.hudRows, 3, 30);
-        config.videoCorner = Math.clamp(config.videoCorner, 0, 3);
-        config.videoSize = Math.clamp(config.videoSize, 0, 2);
         config.volume = Math.clamp(config.volume, 0.0f, 1.0f);
         return config;
+    }
+
+    /** Puts both windows back where they start out. */
+    public void resetWindows() {
+        TrackerConfig defaults = new TrackerConfig();
+        this.listX = defaults.listX;
+        this.listY = defaults.listY;
+        this.listWidth = defaults.listWidth;
+        this.hudRows = defaults.hudRows;
+        this.videoX = defaults.videoX;
+        this.videoY = defaults.videoY;
+        this.videoWidth = defaults.videoWidth;
+        this.hudVisible = true;
+        this.videoInHud = true;
     }
 
     public void save() {

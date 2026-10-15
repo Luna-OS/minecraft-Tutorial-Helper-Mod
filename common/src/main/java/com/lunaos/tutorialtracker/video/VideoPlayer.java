@@ -573,7 +573,7 @@ public final class VideoPlayer {
         }
 
         private Process launch(List<String> command) throws IOException {
-            Process process = new ProcessBuilder(command).start();
+            Process process = VideoTools.processBuilder(command).start();
             process.getOutputStream().close();
             return process;
         }
