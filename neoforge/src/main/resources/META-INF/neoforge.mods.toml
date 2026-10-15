@@ -1,0 +1,26 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "MIT"
+issueTrackerURL = "https://github.com/Luna-OS/minecraft-Tutorial-Helper-Mod/issues"
+
+[[mods]]
+modId = "tutorialtracker"
+version = "${version}"
+displayName = "Tutorial Tracker"
+authors = "Luna"
+iconFile = "assets/tutorialtracker/icon.png"
+description = '''Paste a build tutorial link: get its material list, count what is in the chests and shulker boxes you assign, and watch the video in game while building. Client side only.'''
+
+[[dependencies.tutorialtracker]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${neoforge_version},)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.tutorialtracker]]
+modId = "minecraft"
+type = "required"
+versionRange = "[${minecraft_version}]"
+ordering = "NONE"
+side = "CLIENT"

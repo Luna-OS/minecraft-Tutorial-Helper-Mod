@@ -1,0 +1,12 @@
+plugins {
+	id 'net.neoforged.moddev'
+}
+
+// Plain Minecraft, no loader: anything that compiles here runs on every loader. Nothing is built from this module;
+// it exists so loader-specific code cannot creep into the shared sources.
+neoForge {
+	neoFormVersion = rootProject.neoform_version
+}
+
+// Nothing ships from here: each loader jar carries these sources itself.
+jar.enabled = false

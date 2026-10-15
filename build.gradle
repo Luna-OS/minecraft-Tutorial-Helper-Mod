@@ -1,0 +1,30 @@
+// Settings every module shares. Loader specifics live in each module's own build.gradle.
+subprojects {
+	apply plugin: 'java'
+
+	version = rootProject.mod_version
+	group = rootProject.maven_group
+
+	java {
+		toolchain.languageVersion = JavaLanguageVersion.of(25)
+	}
+
+	tasks.withType(JavaCompile).configureEach {
+		options.encoding = 'UTF-8'
+		options.release = 25
+	}
+
+	repositories {
+		// The loaders' own repositories first: they carry most of what is needed and keep Maven Central's rate
+		// limit out of the way.
+		maven { name = 'NeoForged'; url = 'https://maven.neoforged.net/releases' }
+		maven { name = 'Fabric'; url = 'https://maven.fabricmc.net/' }
+		maven { name = 'MinecraftForge'; url = 'https://maven.minecraftforge.net/' }
+		maven { name = 'Mojang'; url = 'https://libraries.minecraft.net/' }
+		mavenCentral()
+	}
+}
+
+// The loader modules compile the common sources as their own.
+ext.commonJava = file('common/src/main/java')
+ext.commonResources = file('common/src/main/resources')
