@@ -170,6 +170,9 @@ public final class TutorialTracker {
         while (TrackerKeys.OPEN.consumeClick()) {
             minecraft.gui.setScreen(new TrackerScreen(null));
         }
+        while (TrackerKeys.ARRANGE.consumeClick()) {
+            minecraft.gui.setScreen(new com.lunaos.tutorialtracker.gui.PopupEditScreen(null));
+        }
         while (TrackerKeys.TOGGLE_HUD.consumeClick()) {
             config.hudVisible = !config.hudVisible;
             config.save();

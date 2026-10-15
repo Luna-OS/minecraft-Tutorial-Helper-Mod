@@ -32,21 +32,15 @@ public class SettingsScreen extends Screen {
         int width = 150;
         int left = this.width / 2 - width - 2;
         int right = this.width / 2 + 2;
-        // The window fits its contents, centred: title, five rows of options, the tools button and "Done".
-        this.panelHeight = 22 + 5 * 24 + 6 + 24 + 6 + 28;
+        // The window fits its contents, centred: title, three rows of options, two wide buttons and "Done".
+        this.panelHeight = 22 + 3 * 24 + 6 + 2 * 24 + 6 + 28;
         this.panelY = Math.max(4, (this.height - this.panelHeight) / 2);
         int y = this.panelY + 22;
 
         option(left, y, () -> Component.translatable("settings.tutorialtracker.hud", onOff(config.hudVisible)),
             b -> config.hudVisible = !config.hudVisible);
-        option(right, y, () -> Component.translatable("settings.tutorialtracker.hud_side",
-                Component.translatable(config.hudRight ? "settings.tutorialtracker.right" : "settings.tutorialtracker.left")),
-            b -> config.hudRight = !config.hudRight);
-        y += 24;
-        option(left, y, () -> Component.translatable("settings.tutorialtracker.hide_done", onOff(config.hideDone)),
+        option(right, y, () -> Component.translatable("settings.tutorialtracker.hide_done", onOff(config.hideDone)),
             b -> config.hideDone = !config.hideDone);
-        option(right, y, () -> Component.translatable("settings.tutorialtracker.rows", config.hudRows),
-            b -> config.hudRows = config.hudRows >= 20 ? 5 : config.hudRows + 5);
         y += 24;
         option(left, y, () -> Component.translatable("settings.tutorialtracker.count_inventory", onOff(config.countInventory)),
             b -> {
@@ -56,13 +50,6 @@ public class SettingsScreen extends Screen {
         option(right, y, () -> Component.translatable("settings.tutorialtracker.video_hud", onOff(config.videoInHud)),
             b -> config.videoInHud = !config.videoInHud);
         y += 24;
-        option(left, y, () -> Component.translatable("settings.tutorialtracker.video_corner",
-                Component.translatable("settings.tutorialtracker.corner." + config.videoCorner)),
-            b -> config.videoCorner = (config.videoCorner + 1) % 4);
-        option(right, y, () -> Component.translatable("settings.tutorialtracker.video_size",
-                Component.translatable("settings.tutorialtracker.size." + config.videoSize)),
-            b -> config.videoSize = (config.videoSize + 1) % 3);
-        y += 24;
         option(left, y, () -> Component.translatable("settings.tutorialtracker.quality", config.videoQuality),
             b -> config.videoQuality = config.videoQuality == 360 ? 480 : config.videoQuality == 480 ? 720 : 360);
         option(right, y, () -> Component.translatable("screen.tutorialtracker.video.volume", Math.round(config.volume * 100)),
@@ -71,6 +58,10 @@ public class SettingsScreen extends Screen {
                 config.volume = next < -0.01f ? 1.0f : Math.max(0, next);
             });
         y += 30;
+        this.addRenderableWidget(Button.builder(Component.translatable("settings.tutorialtracker.arrange"),
+                b -> this.minecraft.gui.setScreen(new PopupEditScreen(this)))
+            .bounds(left, y, width * 2 + 4, 20).build());
+        y += 24;
         this.addRenderableWidget(Button.builder(Component.translatable("settings.tutorialtracker.tools"),
                 b -> this.minecraft.gui.setScreen(new ToolsScreen(this)))
             .bounds(left, y, width * 2 + 4, 20).build());

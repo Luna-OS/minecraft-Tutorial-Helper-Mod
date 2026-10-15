@@ -136,11 +136,10 @@ public class TrackerScreen extends Screen {
             .bounds(this.videoX + (quarter + 2) * 3, buttonY, rightWidth - (quarter + 2) * 3, 20).build());
         int half = (rightWidth - 2) / 2;
         TrackerConfig config = TutorialTracker.config();
-        this.addRenderableWidget(Button.builder(hudVideoLabel(), b -> {
-            config.videoInHud = !config.videoInHud;
-            config.save();
-            b.setMessage(hudVideoLabel());
-        }).bounds(this.videoX, buttonY + 22, half, 20).build());
+        this.addRenderableWidget(Button.builder(Component.translatable("screen.tutorialtracker.arrange"),
+                b -> this.minecraft.gui.setScreen(new PopupEditScreen(this)))
+            .bounds(this.videoX, buttonY + 22, half, 20)
+            .tooltip(Tooltip.create(Component.translatable("screen.tutorialtracker.arrange.tooltip"))).build());
         this.addRenderableWidget(Button.builder(volumeLabel(), b -> {
             float next = config.volume - 0.25f;
             config.volume = next < -0.01f ? 1.0f : Math.max(0, next);
@@ -284,11 +283,6 @@ public class TrackerScreen extends Screen {
     private Component playLabel() {
         VideoPlayer.State state = VideoPlayer.get().state();
         return Component.literal(state == VideoPlayer.State.PLAYING || state == VideoPlayer.State.LOADING ? "⏸" : "▶");
-    }
-
-    private static Component hudVideoLabel() {
-        return Component.translatable("screen.tutorialtracker.video.hud",
-            Component.translatable(TutorialTracker.config().videoInHud ? "options.on" : "options.off"));
     }
 
     private static Component volumeLabel() {

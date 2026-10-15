@@ -17,6 +17,8 @@ public final class TrackerKeys {
         new KeyMapping("key.tutorialtracker.assign_container", InputConstants.KEY_K, CATEGORY);
     public static final KeyMapping PLAY_PAUSE =
         new KeyMapping("key.tutorialtracker.play_pause", InputConstants.KEY_J, CATEGORY);
+    public static final KeyMapping ARRANGE =
+        new KeyMapping("key.tutorialtracker.arrange", InputConstants.KEY_U, CATEGORY);
     public static final KeyMapping SEEK_BACK =
         new KeyMapping("key.tutorialtracker.seek_back", InputConstants.UNKNOWN.getValue(), CATEGORY);
     public static final KeyMapping SEEK_FORWARD =
@@ -26,8 +28,8 @@ public final class TrackerKeys {
     public static final KeyMapping TOGGLE_VIDEO =
         new KeyMapping("key.tutorialtracker.toggle_video", InputConstants.UNKNOWN.getValue(), CATEGORY);
 
-    public static final KeyMapping[] ALL = {OPEN, TOGGLE_HUD, ASSIGN_CONTAINER, PLAY_PAUSE, SEEK_BACK, SEEK_FORWARD,
-        VIDEO_SCREEN, TOGGLE_VIDEO};
+    public static final KeyMapping[] ALL = {OPEN, TOGGLE_HUD, ASSIGN_CONTAINER, PLAY_PAUSE, ARRANGE, SEEK_BACK,
+        SEEK_FORWARD, VIDEO_SCREEN, TOGGLE_VIDEO};
 
     private TrackerKeys() {
     }
