@@ -6,7 +6,7 @@ der Kisten und Shulkerkisten, die du dem Projekt zuweist. Das Video läuft direk
 oder groß. Es gibt keine Vorlage und kein Hologramm, nur Liste und Video.
 
 Die Mod läuft nur auf dem Client. Auf dem Server muss nichts installiert sein, sie funktioniert also auch auf
-fremden Servern.
+fremden Servern. Sie läuft unter Windows, macOS (Apple Silicon und Intel) und Linux.
 
 ![Materialliste mit Fortschritt](docs/materialliste.webp)
 
@@ -28,17 +28,23 @@ fremden Servern.
   läuft, sieht sie den Inhalt erst, wenn du die Kiste öffnest. Danach wird er bei jedem Öffnen aktualisiert und
   gespeichert. Shulkerkisten und Bündel werden mit ihrem Inhalt gezählt, egal ob sie im Inventar oder in einer Kiste
   liegen. Dein Inventar zählt ebenfalls mit (abschaltbar).
-- **Liste im HUD.** Zeigt beim Bauen „vorhanden/benötigt“ für jedes Item: grün, wenn genug da ist, gelb bei einem
-  Teil, rot bei nichts. Fehlendes steht oben.
-- **Video im Spiel.** Als Mini-Player in einer Bildschirmecke, während du baust, oder groß mit Spulleiste.
+- **Liste als Fenster.** Zeigt beim Bauen „vorhanden/benötigt“ für jedes Item: grün, wenn genug da ist, gelb bei
+  einem Teil, rot bei nichts. Fehlendes steht oben.
+- **Video als Fenster.** Ein kleiner Player über dem Spiel, während du baust, oder groß mit Spulleiste.
   **J** pausiert und spielt weiter. Die Stelle, an der du aufgehört hast, wird pro Projekt gespeichert.
+- **Fenster frei anordnen.** Drück **U** (oder „Fenster anordnen“ im Menü). Dann bekommst du die Maus und kannst
+  Liste und Video an der Titelleiste verschieben, an der Ecke unten rechts größer oder kleiner ziehen und mit ✕
+  schließen. Im Videofenster gibt es « ▶ » zum Spulen und Abspielen. Mit Esc oder U geht es zurück ins Spiel, und
+  die Fenster bleiben, wo du sie hingestellt hast.
 - **Mehrere Projekte.** Jedes Tutorial ist ein eigenes Projekt mit eigener Liste und eigenen Kisten.
 - **Im Minecraft-Look.** Graue Inventarfenster, Slots, die XP-Leiste als Fortschrittsbalken und der Tooltip-Rahmen
   im HUD. Deutsch und Englisch.
 
-| Beim Bauen: Liste im HUD | Kiste zuweisen |
+| Beim Bauen: Liste als Fenster | Kiste zuweisen |
 |---|---|
 | ![HUD](docs/hud.webp) | ![Kiste](docs/kiste.webp) |
+
+![Fenster anordnen](docs/fenster.webp)
 
 | Video im Menü | Mini-Video im HUD |
 |---|---|
@@ -60,6 +66,10 @@ und Ton) und **Deno** (braucht yt-dlp für YouTube). Sind sie schon installiert,
 `.minecraft/tutorialtracker/bin`, insgesamt etwa 80 bis 200 MB, je nach System. Funktionieren YouTube-Videos
 irgendwann nicht mehr, hilft dort „yt-dlp aktualisieren“.
 
+**Auf dem Mac** findet die Mod auch Programme, die du mit Homebrew (`brew install yt-dlp ffmpeg deno`) oder MacPorts
+installiert hast. Die heruntergeladenen Programme gibt es für Apple Silicon und Intel. Gatekeeper blockiert sie
+nicht.
+
 Materialliste und Kistenzählen funktionieren auch ohne diese Programme.
 
 ![Download der Programme](docs/download.webp)
@@ -71,7 +81,8 @@ Materialliste und Kistenzählen funktionieren auch ohne diese Programme.
 | **B** | Tutorial-Menü öffnen (Link, Liste, Video, Projekte) |
 | **K** | Angeschaute Kiste/Shulkerkiste dem Projekt zuweisen oder entfernen |
 | **J** | Video abspielen/pausieren |
-| **H** | Materialliste im HUD ein/aus |
+| **H** | Materialliste ein/aus |
+| **U** | Fenster anordnen: Maus freigeben, Liste und Video verschieben und in der Größe ändern |
 | *frei* | Video 10 s zurück/vor, Video groß, Mini-Video ein/aus |
 
 Alle Tasten lassen sich unter *Optionen → Steuerung → Tastenbelegung → Tutorial Tracker* ändern. Im großen

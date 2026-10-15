@@ -22,7 +22,7 @@
   "message.tutorialtracker.pasted": "%s Materialien erkannt",
   "screen.tutorialtracker.title": "Tutorial Tracker",
   "screen.tutorialtracker.url": "Tutorial-Link",
-  "screen.tutorialtracker.url.hint": "YouTube- oder Webseiten-Link zum Tutorial einfügen (Strg+V)",
+  "screen.tutorialtracker.url.hint": "YouTube- oder Webseiten-Link zum Tutorial einfügen (Strg+V / ⌘+V)",
   "screen.tutorialtracker.load": "Laden",
   "screen.tutorialtracker.unnamed": "Neues Projekt",
   "screen.tutorialtracker.empty": "Noch keine Materialien. Füge oben den Link zu einem Tutorial ein und klicke auf „Laden“ – die Materialliste wird aus der Videobeschreibung gelesen. Steht sie woanders, nutze „Materialliste einfügen“.",

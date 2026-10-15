@@ -22,7 +22,7 @@
   "message.tutorialtracker.pasted": "%s materials recognised",
   "screen.tutorialtracker.title": "Tutorial Tracker",
   "screen.tutorialtracker.url": "Tutorial link",
-  "screen.tutorialtracker.url.hint": "Paste a YouTube or web link to the tutorial (Ctrl+V)",
+  "screen.tutorialtracker.url.hint": "Paste a YouTube or web link to the tutorial (Ctrl+V / ⌘+V)",
   "screen.tutorialtracker.load": "Load",
   "screen.tutorialtracker.unnamed": "New project",
   "screen.tutorialtracker.empty": "No materials yet. Paste the link to a tutorial above and click \"Load\" – the material list is read from the video description. If it is somewhere else, use \"Paste material list\".",

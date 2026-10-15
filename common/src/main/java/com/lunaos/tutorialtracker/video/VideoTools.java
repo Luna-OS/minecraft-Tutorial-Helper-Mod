@@ -111,23 +111,38 @@ public final class VideoTools {
                 return own;
             }
         }
-        String path = System.getenv("PATH");
-        if (path != null) {
-            for (String entry : path.split(java.io.File.pathSeparator)) {
-                if (entry.isBlank()) {
-                    continue;
+        for (String entry : searchPath()) {
+            if (entry.isBlank()) {
+                continue;
+            }
+            try {
+                Path candidate = Path.of(entry.trim().replace("\"", "")).resolve(name);
+                if (Files.isRegularFile(candidate) && Files.isExecutable(candidate)) {
+                    return candidate;
                 }
-                try {
-                    Path candidate = Path.of(entry.trim().replace("\"", "")).resolve(name);
-                    if (Files.isRegularFile(candidate) && Files.isExecutable(candidate)) {
-                        return candidate;
-                    }
-                } catch (RuntimeException ignored) {
-                    // A malformed PATH entry.
-                }
+            } catch (RuntimeException ignored) {
+                // A malformed PATH entry.
             }
         }
         return null;
+    }
+
+    /**
+     * The PATH, plus where package managers put programs. The launcher on macOS starts the game with a bare PATH
+     * (/usr/bin:/bin:...), so Homebrew's and MacPorts' programs would not be found otherwise.
+     */
+    private static List<String> searchPath() {
+        List<String> entries = new ArrayList<>();
+        String path = System.getenv("PATH");
+        if (path != null) {
+            entries.addAll(List.of(path.split(java.io.File.pathSeparator)));
+        }
+        if (!WINDOWS) {
+            String home = System.getProperty("user.home", "");
+            entries.addAll(List.of("/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin", "/usr/bin",
+                home + "/.deno/bin", home + "/.local/bin", home + "/bin"));
+        }
+        return entries;
     }
 
     public static boolean isOwnCopy(Path tool) {
@@ -138,13 +153,13 @@ public final class VideoTools {
     public static int downloadMegabytes() {
         int total = 0;
         if (ytDlp() == null) {
-            total += WINDOWS ? 18 : 40;
+            total += WINDOWS ? 18 : MAC ? 37 : 40;
         }
         if (ffmpeg() == null) {
             total += WINDOWS ? 115 : MAC ? 30 : 150;
         }
         if (deno() == null) {
-            total += 42;
+            total += MAC ? 39 : 42;
         }
         return total;
     }
@@ -231,7 +246,7 @@ public final class VideoTools {
         Path target = binDir.resolve(WINDOWS ? "yt-dlp.exe" : "yt-dlp");
         Path temp = download("https://github.com/yt-dlp/yt-dlp/releases/latest/download/" + asset, progress);
         Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
-        target.toFile().setExecutable(true);
+        makeRunnable(target);
     }
 
     private static void installFfmpeg(Progress progress) throws IOException, InterruptedException {
@@ -267,7 +282,7 @@ public final class VideoTools {
                 Files.deleteIfExists(archive);
             }
         }
-        target.toFile().setExecutable(true);
+        makeRunnable(target);
     }
 
     private static void installDeno(Progress progress) throws IOException, InterruptedException {
@@ -284,7 +299,43 @@ public final class VideoTools {
         Path zip = download("https://github.com/denoland/deno/releases/latest/download/deno-" + triple + ".zip", progress);
         unzipEntry(zip, WINDOWS ? "deno.exe" : "deno", target);
         Files.deleteIfExists(zip);
+        makeRunnable(target);
+    }
+
+    /**
+     * A process with the wider search path: yt-dlp looks for Deno (and ffmpeg) on its PATH, which on macOS would
+     * otherwise be the launcher's bare one.
+     */
+    public static ProcessBuilder processBuilder(List<String> command) {
+        ProcessBuilder builder = new ProcessBuilder(command);
+        java.util.LinkedHashSet<String> entries = new java.util.LinkedHashSet<>();
+        if (binDir != null) {
+            entries.add(binDir.toString());
+        }
+        for (String entry : searchPath()) {
+            if (!entry.isBlank()) {
+                entries.add(entry);
+            }
+        }
+        String key = builder.environment().keySet().stream().filter(k -> k.equalsIgnoreCase("PATH")).findFirst()
+            .orElse("PATH");
+        builder.environment().put(key, String.join(java.io.File.pathSeparator, entries));
+        return builder;
+    }
+
+    /**
+     * Marks a downloaded program as executable. On macOS it also drops the "downloaded from the internet" mark, which
+     * would otherwise have Gatekeeper refuse to start it from the game without telling anyone.
+     */
+    private static void makeRunnable(Path target) {
         target.toFile().setExecutable(true);
+        if (MAC) {
+            try {
+                run(List.of("/usr/bin/xattr", "-d", "com.apple.quarantine", target.toString()), 10);
+            } catch (Exception ignored) {
+                // Not marked, or no xattr: nothing to remove.
+            }
+        }
     }
 
     private static Path download(String url, Progress progress) throws IOException, InterruptedException {
@@ -344,8 +395,7 @@ public final class VideoTools {
     }
 
     static Result run(List<String> command, int timeoutSeconds) throws IOException, InterruptedException {
-        ProcessBuilder builder = new ProcessBuilder(command);
-        Process process = builder.start();
+        Process process = processBuilder(command).start();
         process.getOutputStream().close();
         ByteArrayOutputStream stderr = new ByteArrayOutputStream();
         Thread errReader = new Thread(() -> {

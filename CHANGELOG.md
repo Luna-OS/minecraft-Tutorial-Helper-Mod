@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.0] – Minecraft 26.3
+
+- **Liste und Video als Fenster:** Beide erscheinen jetzt als Fenster mit Titelleiste über dem Spiel. Mit **U**
+  (oder „Fenster anordnen“ im Menü) bekommst du die Maus: Fenster an der Titelleiste verschieben, an der Ecke unten
+  rechts größer oder kleiner ziehen, mit ✕ schließen. Im Videofenster gibt es « ▶ » zum Zurückspulen, Abspielen und
+  Vorspulen. Position und Größe werden gespeichert.
+- **macOS:** Mit Homebrew oder MacPorts installierte Programme (yt-dlp, ffmpeg, Deno) werden jetzt gefunden, auch
+  wenn der Launcher sie nicht im PATH hat. Von der Mod heruntergeladene Programme werden nicht mehr von Gatekeeper
+  blockiert.
+
 ## [1.0.0] – Minecraft 26.3
 
 Erste Version, für Fabric, NeoForge und Forge. Nur für den Client, auf dem Server muss nichts installiert sein.
