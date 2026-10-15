@@ -1,0 +1,45 @@
+plugins {
+	id 'net.minecraftforge.gradle'
+}
+
+base {
+	archivesName = "${rootProject.archives_base_name}-forge"
+}
+
+sourceSets.main {
+	java.srcDir rootProject.commonJava
+	resources.srcDir rootProject.commonResources
+}
+
+minecraft {
+	runs {
+		configureEach {
+			// Shared with the other loaders' runs, so worlds and settings carry over.
+			workingDir = rootProject.layout.projectDirectory.dir('run')
+		}
+		register('client')
+	}
+}
+
+repositories {
+	minecraft.mavenizer(it)
+	maven fg.forgeMaven
+	maven fg.minecraftLibsMaven
+}
+
+dependencies {
+	implementation minecraft.dependency("net.minecraftforge:forge:${rootProject.forge_version}")
+	annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.6'
+}
+
+processResources {
+	def props = [version: project.version, minecraft_version: rootProject.minecraft_version]
+	inputs.properties props
+	filesMatching("META-INF/mods.toml") {
+		expand props
+	}
+}
+
+jar {
+	archiveFileName.set("${rootProject.archives_base_name}-forge-${project.version}+${rootProject.minecraft_version}.jar")
+}

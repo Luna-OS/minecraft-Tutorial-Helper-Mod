@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "tutorialtracker",
+  "version": "${version}",
+  "name": "Tutorial Tracker",
+  "description": "Paste a build tutorial link: get its material list, count what is in the chests and shulker boxes you assign, and watch the video in game while building. Client side only.",
+  "authors": [
+    "Luna"
+  ],
+  "license": "MIT",
+  "icon": "assets/tutorialtracker/icon.png",
+  "contact": {
+    "sources": "https://github.com/Luna-OS/minecraft-Tutorial-Helper-Mod",
+    "issues": "https://github.com/Luna-OS/minecraft-Tutorial-Helper-Mod/issues"
+  },
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.lunaos.tutorialtracker.fabric.TutorialTrackerFabric"
+    ]
+  },
+  "depends": {
+    "fabricloader": "*",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}

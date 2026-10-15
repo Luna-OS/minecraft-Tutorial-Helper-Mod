@@ -1,0 +1,39 @@
+plugins {
+	id 'net.fabricmc.fabric-loom'
+}
+
+base {
+	archivesName = "${rootProject.archives_base_name}-fabric"
+}
+
+sourceSets.main {
+	java.srcDir rootProject.commonJava
+	resources.srcDir rootProject.commonResources
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+}
+
+loom {
+	runs {
+		// Shared with the other loaders' runs, so worlds and settings carry over.
+		client {
+			runDir = "../run"
+		}
+	}
+}
+
+processResources {
+	def props = [version: project.version, minecraft_version: rootProject.minecraft_version]
+	inputs.properties props
+	filesMatching("fabric.mod.json") {
+		expand props
+	}
+}
+
+jar {
+	archiveFileName.set("${rootProject.archives_base_name}-fabric-${project.version}+${rootProject.minecraft_version}.jar")
+}
