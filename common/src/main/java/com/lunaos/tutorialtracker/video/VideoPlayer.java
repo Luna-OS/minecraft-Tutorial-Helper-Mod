@@ -37,9 +37,12 @@ public final class VideoPlayer {
         ERROR
     }
 
-    /** {@code live}: a stream running now (a Twitch channel, a YouTube live): no length, no seeking. */
+    /**
+     * {@code live}: a stream running now (a Twitch channel, a YouTube live): no length, no seeking. {@code hls}: an
+     * HLS playlist (all of Twitch, YouTube lives) rather than one file.
+     */
     record Stream(String title, String videoUrl, String audioUrl, String headers, int width, int height,
-                  double duration, boolean live) {
+                  double duration, boolean live, boolean hls) {
     }
 
     private static final VideoPlayer INSTANCE = new VideoPlayer();
@@ -382,6 +385,7 @@ public final class VideoPlayer {
         String videoUrl = null;
         String audioUrl = null;
         String headers = headers(info);
+        String protocol = string(info, "protocol");
         int width = integer(info, "width");
         int height = integer(info, "height");
         JsonArray requested = info.has("requested_formats") && info.get("requested_formats").isJsonArray()
@@ -393,6 +397,7 @@ public final class VideoPlayer {
                 boolean hasAudio = !"none".equals(string(format1, "acodec"));
                 if (hasVideo && videoUrl == null) {
                     videoUrl = string(format1, "url");
+                    protocol = string(format1, "protocol");
                     width = integer(format1, "width");
                     height = integer(format1, "height");
                     if (format1.has("http_headers")) {
@@ -415,7 +420,7 @@ public final class VideoPlayer {
             throw new IOException("no video stream found");
         }
         return new Stream(title, videoUrl, audioUrl == null || audioUrl.isEmpty() ? null : audioUrl, headers,
-            width, height, live ? 0 : duration, live);
+            width, height, live ? 0 : duration, live, protocol.startsWith("m3u8"));
     }
 
     private static String headers(JsonObject object) {
@@ -571,7 +576,12 @@ public final class VideoPlayer {
                     command.add("-headers");
                     command.add(this.stream.headers);
                 }
-                command.addAll(List.of("-reconnect", "1", "-reconnect_streamed", "1", "-reconnect_delay_max", "5"));
+                // Picks up a dropped connection to a video file. Not for an HLS playlist, which fetches its
+                // pieces itself: there ffmpeg would take the end of every piece for a dropped connection and
+                // reconnect forever without showing a picture.
+                if (!this.stream.hls) {
+                    command.addAll(List.of("-reconnect", "1", "-reconnect_streamed", "1", "-reconnect_delay_max", "5"));
+                }
             }
             if (this.start > 0.05) {
                 command.add("-ss");

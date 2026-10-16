@@ -151,7 +151,9 @@ public final class TutorialTracker {
     public static void playOrPause() {
         VideoPlayer player = VideoPlayer.get();
         Project project = activeProject();
-        if (player.isActive() || player.state() == VideoPlayer.State.ENDED) {
+        // Pause or resume only the project's own video: after a new link was loaded, the old one is replaced.
+        boolean same = project == null || project.url.equals(player.url());
+        if (same && (player.isActive() || player.state() == VideoPlayer.State.ENDED)) {
             player.togglePause();
             return;
         }
