@@ -17,11 +17,17 @@
   "entrypoints": {
     "client": [
       "com.lunaos.tutorialtracker.fabric.TutorialTrackerFabric"
+    ],
+    "modmenu": [
+      "com.lunaos.tutorialtracker.fabric.ModMenuIntegration"
     ]
   },
   "depends": {
     "fabricloader": "*",
     "fabric-api": "*",
     "minecraft": "${minecraft_version}"
+  },
+  "suggests": {
+    "modmenu": "*"
   }
 }

@@ -73,7 +73,7 @@
   "settings.tutorialtracker.count_inventory": "Inventar mitzählen: %s",
   "settings.tutorialtracker.video_hud": "Mini-Video: %s",
   "settings.tutorialtracker.quality": "Video-Qualität: %sp",
-  "settings.tutorialtracker.tools": "Video-Player (yt-dlp / ffmpeg) …",
+  "settings.tutorialtracker.tools": "Video-Player …",
   "screen.tutorialtracker.tools": "Video-Player",
   "screen.tutorialtracker.tools.message": "Damit Videos im Spiel laufen, braucht die Mod drei kostenlose Programme: yt-dlp (findet den Videostream), ffmpeg (dekodiert Bild und Ton) und Deno (braucht yt-dlp für YouTube). Bereits installierte werden direkt benutzt. Fehlende kann die Mod einmalig in den Ordner „tutorialtracker/bin“ deines Minecraft-Ordners herunterladen. Die Materialliste und das Kistenzählen funktionieren auch ohne.",
   "screen.tutorialtracker.tools.download": "Fehlende herunterladen (ca. %s MB)",
@@ -92,10 +92,11 @@
   "key.tutorialtracker.arrange": "Fenster anordnen (Maus freigeben)",
   "popup.tutorialtracker.no_materials": "Noch keine Materialien – Tutorial-Link im Menü (B) laden.",
   "screen.tutorialtracker.arrange": "Fenster anordnen",
-  "screen.tutorialtracker.arrange.tooltip": "Materialliste und Video als Fenster im Spiel verschieben und in der Größe ändern (Taste U)",
-  "screen.tutorialtracker.arrange.hint": "Fenster an der Titelleiste ziehen · Ecke unten rechts ändert die Größe · ✕ schließt · Esc oder U: zurück ins Spiel",
+  "screen.tutorialtracker.arrange.tooltip": "Materialliste und Video in voller Größe über dem Spiel verschieben und in der Größe ändern (Taste U). Pfeiltasten verschieben das angeklickte Fenster genau, mit Alt (Mac: Option) ändern sie die Größe.",
+  "screen.tutorialtracker.arrange.hint": "Ziehen: verschieben · Ecke: Größe · Pfeile (+Alt): genau · Esc/U: zurück",
   "screen.tutorialtracker.arrange.list": "Liste: %s",
   "screen.tutorialtracker.arrange.video": "Video: %s",
   "screen.tutorialtracker.arrange.reset": "Zurücksetzen",
-  "settings.tutorialtracker.arrange": "Fenster anordnen …"
+  "settings.tutorialtracker.arrange": "Vollbild …",
+  "settings.tutorialtracker.windows": "Fenster: ziehen · Ecke unten rechts = Größe"
 }
