@@ -22,7 +22,7 @@
   "message.tutorialtracker.pasted": "%s Materialien erkannt",
   "screen.tutorialtracker.title": "Tutorial Tracker",
   "screen.tutorialtracker.url": "Tutorial-Link",
-  "screen.tutorialtracker.url.hint": "YouTube- oder Webseiten-Link zum Tutorial einfügen (Strg+V / ⌘+V)",
+  "screen.tutorialtracker.url.hint": "YouTube-, Twitch- oder Webseiten-Link einfügen (Strg+V / Cmd+V)",
   "screen.tutorialtracker.load": "Laden",
   "screen.tutorialtracker.unnamed": "Neues Projekt",
   "screen.tutorialtracker.empty": "Noch keine Materialien. Füge oben den Link zu einem Tutorial ein und klicke auf „Laden“ – die Materialliste wird aus der Videobeschreibung gelesen. Steht sie woanders, nutze „Materialliste einfügen“.",
@@ -99,5 +99,15 @@
   "screen.tutorialtracker.arrange.reset": "Zurücksetzen",
   "settings.tutorialtracker.arrange": "Vollbild …",
   "settings.tutorialtracker.windows": "Fenster: ziehen · Ecke unten rechts = Größe",
-  "screen.tutorialtracker.tools.locked": "Ein anderes Programm hält die Datei gerade fest, meist der Virenscanner, der den neuen Download prüft. Warte ein paar Sekunden und klicke noch einmal auf den Knopf."
+  "screen.tutorialtracker.tools.locked": "Ein anderes Programm hält die Datei gerade fest, meist der Virenscanner, der den neuen Download prüft. Warte ein paar Sekunden und klicke noch einmal auf den Knopf.",
+  "settings.tutorialtracker.theme": "Design: %s",
+  "settings.tutorialtracker.theme.light": "Hell",
+  "settings.tutorialtracker.theme.dark": "Dunkel",
+  "settings.tutorialtracker.auto_update": "Auto-Update: %s",
+  "settings.tutorialtracker.update.ready": "Version %s wird beim nächsten Start installiert",
+  "settings.tutorialtracker.update.downloading": "Lade Version %s …",
+  "settings.tutorialtracker.update.checking": "Suche nach Updates …",
+  "settings.tutorialtracker.update.current": "Aktuell",
+  "settings.tutorialtracker.update.failed": "Update-Suche fehlgeschlagen",
+  "message.tutorialtracker.update_ready": "Tutorial Tracker %s ist heruntergeladen und wird beim nächsten Start installiert."
 }

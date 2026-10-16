@@ -23,7 +23,8 @@ import net.neoforged.neoforge.common.NeoForge;
 public final class TutorialTrackerNeoForge {
 
     public TutorialTrackerNeoForge(IEventBus modBus, ModContainer container) {
-        TutorialTracker.init(FMLPaths.GAMEDIR.get());
+        TutorialTracker.init(FMLPaths.GAMEDIR.get(), "neoforge", container.getModInfo().getVersion().toString(),
+            container.getModInfo().getOwningFile().getFile().getFilePath());
 
         modBus.addListener(RegisterKeyMappingsEvent.class, event -> {
             for (KeyMapping key : TrackerKeys.ALL) {

@@ -12,8 +12,8 @@ fremden Servern. Sie läuft unter Windows, macOS (Apple Silicon und Intel) und L
 
 ## Funktionen
 
-- **Materialliste aus dem Link.** Bei YouTube wird die Videobeschreibung gelesen, bei anderen Links der Text der
-  Webseite. Erkannt werden Zeilen wie `64x Hopper`, `Hopper x 64`, `Hoppers: 64`, `3 stacks of cobblestone`,
+- **Materialliste aus dem Link.** Bei YouTube und Twitch wird die Videobeschreibung gelesen, bei anderen Links der
+  Text der Webseite. Erkannt werden Zeilen wie `64x Hopper`, `Hopper x 64`, `Hoppers: 64`, `3 stacks of cobblestone`,
   `2 Shulker of Glass`, `1.5k cobblestone` oder `10 Trichter`. Stacks, Shulkerkisten (27 Stacks) und Doppelkisten
   (54 Stacks) werden umgerechnet, mit der echten Stapelgröße des Items (16 Enderperlen sind ein Stack). Zeitstempel,
   Koordinaten, Seeds, Raten und Versionsnummern werden ignoriert. Gibt es einen Abschnitt „Materials:“ oder
@@ -32,6 +32,8 @@ fremden Servern. Sie läuft unter Windows, macOS (Apple Silicon und Intel) und L
   einem Teil, rot bei nichts. Fehlendes steht oben.
 - **Video als Fenster.** Ein kleiner Player über dem Spiel, während du baust, oder groß mit Spulleiste.
   **J** pausiert und spielt weiter. Die Stelle, an der du aufgehört hast, wird pro Projekt gespeichert.
+- **YouTube und Twitch.** Neben YouTube-Videos laufen auch Twitch-Videos (VODs), Clips und Livestreams. Ein
+  Livestream zeigt „● LIVE“ statt einer Zeit und springt nach einer Pause wieder zum aktuellen Stand.
 - **Fenster frei anordnen.** Drück **U** (oder „Fenster anordnen“ im Menü). Dann bekommst du die Maus und kannst
   Liste und Video an der Titelleiste verschieben, an der Ecke unten rechts größer oder kleiner ziehen und mit ✕
   schließen. Im Videofenster gibt es « ▶ » zum Spulen und Abspielen. Mit Esc oder U geht es zurück ins Spiel, und
@@ -39,11 +41,16 @@ fremden Servern. Sie läuft unter Windows, macOS (Apple Silicon und Intel) und L
 - **Fenster in den Mod-Einstellungen.** Die Einstellungen (über **Mod Menu** bei Fabric, die Mod-Liste bei NeoForge
   und Forge oder *B → Einstellungen*) zeigen eine kleine Vorschau des Bildschirms. Dort ziehst du Liste und Video
   per Drag & Drop an ihren Platz und an der Ecke unten rechts größer oder kleiner, auch im Hauptmenü ohne Welt.
-  Für genaue Positionen: Fenster anklicken, dann verschieben die Pfeiltasten (mit Shift 10 Pixel), mit Alt (Mac: ⌥)
-  ändern sie die Größe. Klappt auch mit Trackpad und Retina-Display.
+  Für genaue Positionen: Fenster anklicken, dann verschieben die Pfeiltasten (mit Shift 10 Pixel), mit Alt (Mac:
+  Option) ändern sie die Größe. Klappt auch mit Trackpad und Retina-Display.
 - **Mehrere Projekte.** Jedes Tutorial ist ein eigenes Projekt mit eigener Liste und eigenen Kisten.
-- **Im Minecraft-Look.** Graue Inventarfenster, Slots, die XP-Leiste als Fortschrittsbalken und der Tooltip-Rahmen
-  im HUD. Deutsch und Englisch.
+- **Im Minecraft-Look, hell oder dunkel.** Graue Inventarfenster, Slots, die XP-Leiste als Fortschrittsbalken und
+  der Tooltip-Rahmen im HUD. Unter *Einstellungen → Design* gibt es einen Darkmode. Deutsch und Englisch.
+- **Schont die FPS.** Gespeichert wird im Hintergrund, gezählt nur bei Änderungen, und die Liste wird nur neu
+  aufgebaut, wenn sich etwas ändert.
+- **Aktualisiert sich selbst.** Beim Start sucht die Mod auf GitHub nach einer neuen Version für deine
+  Minecraft-Version und deinen Loader, lädt sie herunter und tauscht sie beim Beenden des Spiels aus. Abschaltbar
+  unter *Einstellungen → Auto-Update*.
 
 | Beim Bauen: Liste als Fenster | Kiste zuweisen |
 |---|---|
@@ -92,7 +99,7 @@ Materialliste und Kistenzählen funktionieren auch ohne diese Programme.
 
 Alle Tasten lassen sich unter *Optionen → Steuerung → Tastenbelegung → Tutorial Tracker* ändern. Im großen
 Video-Fenster pausiert die Leertaste, und die Pfeiltasten springen 5 Sekunden. Beim Anordnen verschieben die
-Pfeiltasten das angeklickte Fenster, mit Alt (Mac: ⌥) ändern sie seine Größe.
+Pfeiltasten das angeklickte Fenster, mit Alt (Mac: Option) ändern sie seine Größe.
 
 ## Gut zu wissen
 
@@ -102,6 +109,10 @@ Pfeiltasten das angeklickte Fenster, mit Alt (Mac: ⌥) ändern sie seine Größ
   mehr an ihrem alten Platz.
 - **YouTube blockiert?** Manchmal zeigt YouTube statt der Seite eine Bot-Prüfung. Versuch es später noch einmal oder
   füge die Liste über „Materialliste einfügen“ ein.
+- **Twitch-Bild grün oder schwarz?** Ein altes ffmpeg (vor Version 7) kann Twitch nicht lesen. Die Mod ignoriert
+  es deshalb und bietet unter *B → Einstellungen → Video-Player* ihren eigenen Download an.
+- **Download-Fehler unter Windows?** Meist hält der Virenscanner die frisch geladene Datei kurz fest. Ein paar
+  Sekunden warten und noch einmal auf den Knopf klicken.
 - **Gespeichert wird** in `.minecraft/config/tutorialtracker/` (Einstellungen und Projekte als JSON).
 
 ## Selbst bauen

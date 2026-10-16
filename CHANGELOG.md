@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.3.0] – Minecraft 26.3
+
+- **Mehr FPS:**
+  - Einstellungen und Projekte werden im Hintergrund gespeichert. Vorher wurde beim Video alle paar Sekunden im
+    Spiel-Thread auf die Festplatte geschrieben.
+  - Das Inventar wird nur noch neu gezählt, wenn sich etwas geändert hat. Shulkerkisten werden dabei nicht mehr
+    kopiert.
+  - Die Liste wird nur neu aufgebaut, wenn sich etwas ändert, statt in jedem Frame.
+  - ffmpeg nutzt nur noch zwei Kerne.
+- **Twitch:** Twitch-Links funktionieren jetzt, für Videos (VODs), Clips und Livestreams. Livestreams zeigen
+  „● LIVE“ und starten nach einer Pause wieder beim aktuellen Stand.
+- **Darkmode:** In den Einstellungen unter „Design: Hell/Dunkel“. Außerdem bleibt die Schrift auch mit
+  Dark-UI-Ressourcenpaketen lesbar.
+- **Auto-Update:** Die Mod sucht beim Start nach einer neuen Version auf GitHub, lädt sie herunter und tauscht sie
+  beim Beenden des Spiels aus. In den Einstellungen abschaltbar.
+- **Download-Fehler unter Windows behoben:** Wenn der Virenscanner eine frisch geladene Datei kurz festhält,
+  versucht die Mod es mehrmals, statt mit einem abgeschnittenen Pfad als Fehler abzubrechen. Fehler werden
+  vollständig angezeigt.
+- Ein installiertes ffmpeg unter Version 7 wird nicht mehr benutzt, weil es Twitch-Streams nicht lesen kann. Die
+  Mod bietet dann ihren eigenen Download an.
+
 ## [1.2.0] – Minecraft 26.3
 
 - **Fenster in den Mod-Einstellungen anordnen:** Die Einstellungen zeigen eine kleine Vorschau des Bildschirms mit

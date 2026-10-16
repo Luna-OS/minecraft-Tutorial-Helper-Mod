@@ -418,7 +418,7 @@ public class TrackerScreen extends Screen {
 
         extractList(graphics, mouseX, mouseY);
         McStyle.label(graphics, this.font, Component.translatable("screen.tutorialtracker.amount").getString(), left,
-            this.amountBox.getY() + 6, this.selected >= 0 ? McStyle.LABEL : 0xFF8B8B8B);
+            this.amountBox.getY() + 6, this.selected >= 0 ? McStyle.LABEL : McStyle.LABEL_DISABLED);
 
         McStyle.inset(graphics, this.videoX, this.videoY, this.videoWidth, this.videoHeight, 0xFF000000);
         VideoPlayer.get().draw(graphics, this.videoX, this.videoY, this.videoWidth, this.videoHeight, true);
@@ -429,7 +429,10 @@ public class TrackerScreen extends Screen {
 
     private void extractVideoTime(GuiGraphicsExtractor graphics) {
         VideoPlayer player = VideoPlayer.get();
-        if (player.duration() > 0) {
+        if (player.isLive()) {
+            int liveX = this.videoX + this.videoWidth - this.font.width(HudRenderer.LIVE) - 3;
+            graphics.text(this.font, HudRenderer.LIVE, liveX, this.videoY + this.videoHeight - 16, McStyle.RED, true);
+        } else if (player.duration() > 0) {
             String time = HudRenderer.time(player.position()) + " / " + HudRenderer.time(player.duration());
             graphics.text(this.font, time, this.videoX + this.videoWidth - this.font.width(time) - 3,
                 this.videoY + this.videoHeight - 16, McStyle.WHITE, true);

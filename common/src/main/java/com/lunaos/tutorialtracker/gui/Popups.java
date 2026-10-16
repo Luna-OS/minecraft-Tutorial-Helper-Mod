@@ -179,10 +179,12 @@ public final class Popups {
         VideoPlayer player = VideoPlayer.get();
         String title = player.title().isEmpty() ? Component.translatable("screen.tutorialtracker.video").getString()
             : player.title();
-        String time = player.duration() > 0
+        boolean live = player.isLive();
+        String time = live ? HudRenderer.LIVE : player.duration() > 0
             ? HudRenderer.time(player.position()) + "/" + HudRenderer.time(player.duration()) : "";
         int controlsWidth = controls ? 4 * (BUTTON + 2) + 1 : 0;
-        frame(graphics, font, rect, title, McStyle.YELLOW, controls ? "" : time, McStyle.GRAY, edit, controlsWidth);
+        frame(graphics, font, rect, title, McStyle.YELLOW, controls ? "" : time, live ? McStyle.RED : McStyle.GRAY,
+            edit, controlsWidth);
         if (controls) {
             boolean playing = player.state() == VideoPlayer.State.PLAYING || player.state() == VideoPlayer.State.LOADING;
             String[] labels = {"«", playing ? "⏸" : "▶", "»"};
@@ -199,6 +201,6 @@ public final class Popups {
         player.draw(graphics, rect.x(), pictureY, rect.width(), pictureHeight, true);
         double duration = player.duration();
         McStyle.xpBar(graphics, rect.x(), pictureY + pictureHeight + 2, rect.width(),
-            duration > 0 ? player.position() / duration : 0);
+            live ? 1 : duration > 0 ? player.position() / duration : 0);
     }
 }

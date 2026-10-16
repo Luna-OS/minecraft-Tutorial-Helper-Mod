@@ -55,6 +55,9 @@ public final class HudRenderer {
         graphics.text(font, row.fittedName(font, x + width - nameX), nameX, y + 1, McStyle.WHITE, true);
     }
 
+    /** In place of a time for a live stream. */
+    static final String LIVE = "● LIVE";
+
     static String format(int count) {
         return count >= 10_000 ? (count / 1000) + "k" : Integer.toString(count);
     }

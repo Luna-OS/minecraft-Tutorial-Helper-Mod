@@ -21,7 +21,9 @@ import net.minecraftforge.fml.loading.FMLPaths;
 public final class TutorialTrackerForge {
 
     public TutorialTrackerForge(FMLJavaModLoadingContext context) {
-        TutorialTracker.init(FMLPaths.GAMEDIR.get());
+        var info = context.getContainer().getModInfo();
+        TutorialTracker.init(FMLPaths.GAMEDIR.get(), "forge", info.getVersion().toString(),
+            info.getOwningFile().getFile().getFilePath());
 
         RegisterKeyMappingsEvent.BUS.addListener(event -> {
             for (KeyMapping key : TrackerKeys.ALL) {

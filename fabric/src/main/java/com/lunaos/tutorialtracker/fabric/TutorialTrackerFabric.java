@@ -3,6 +3,8 @@ package com.lunaos.tutorialtracker.fabric;
 import com.lunaos.tutorialtracker.TrackerKeys;
 import com.lunaos.tutorialtracker.TutorialTracker;
 import com.lunaos.tutorialtracker.gui.HudRenderer;
+import java.nio.file.Path;
+import java.util.List;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
@@ -10,6 +12,8 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.metadata.ModOrigin;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.resources.Identifier;
 
@@ -17,7 +21,11 @@ public final class TutorialTrackerFabric implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        TutorialTracker.init(FabricLoader.getInstance().getGameDir());
+        ModContainer mod = FabricLoader.getInstance().getModContainer(TutorialTracker.MOD_ID).orElseThrow();
+        // The jar the mod came from, for the updater; none in a development setup.
+        List<Path> paths = mod.getOrigin().getKind() == ModOrigin.Kind.PATH ? mod.getOrigin().getPaths() : List.of();
+        TutorialTracker.init(FabricLoader.getInstance().getGameDir(), "fabric",
+            mod.getMetadata().getVersion().getFriendlyString(), paths.size() == 1 ? paths.get(0) : null);
         for (KeyMapping key : TrackerKeys.ALL) {
             KeyMappingHelper.registerKeyMapping(key);
         }

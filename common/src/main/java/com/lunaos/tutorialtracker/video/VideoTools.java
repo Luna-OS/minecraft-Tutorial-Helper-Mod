@@ -119,7 +119,8 @@ public final class VideoTools {
             }
             try {
                 Path candidate = Path.of(entry.trim().replace("\"", "")).resolve(name);
-                if (Files.isRegularFile(candidate) && Files.isExecutable(candidate)) {
+                if (Files.isRegularFile(candidate) && Files.isExecutable(candidate)
+                    && (tool != Tool.FFMPEG || recentEnough(candidate))) {
                     return candidate;
                 }
             } catch (RuntimeException ignored) {
@@ -127,6 +128,27 @@ public final class VideoTools {
             }
         }
         return null;
+    }
+
+    /** Whether an installed ffmpeg is new enough, by path; asked once per path. */
+    private static final java.util.Map<Path, Boolean> RECENT = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * ffmpeg before 7 cannot read the fragmented MP4 streams Twitch sends (the picture comes out green or not at
+     * all): such an old installed one is passed over, so the mod offers its own download instead. Builds from the
+     * development branch call themselves "N-…" and are new.
+     */
+    private static boolean recentEnough(Path ffmpeg) {
+        return RECENT.computeIfAbsent(ffmpeg, path -> {
+            try {
+                Result result = run(List.of(path.toString(), "-hide_banner", "-version"), 10);
+                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("ffmpeg version n?(\\d+)\\.")
+                    .matcher(result.stdout);
+                return !matcher.find() || Integer.parseInt(matcher.group(1)) >= 7;
+            } catch (Exception e) {
+                return true;
+            }
+        });
     }
 
     /**
