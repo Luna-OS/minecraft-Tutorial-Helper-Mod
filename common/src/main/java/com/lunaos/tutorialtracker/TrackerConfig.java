@@ -30,6 +30,10 @@ public final class TrackerConfig {
     public int videoQuality = 480;
     public float volume = 0.8f;
     public String activeProject = "";
+    /** The dark design for the mod's windows instead of the game's light grey. */
+    public boolean darkMode = false;
+    /** Look for a newer version on GitHub when the game starts, and install it on the next start. */
+    public boolean autoUpdate = true;
 
     private transient Path file;
 
@@ -68,12 +72,8 @@ public final class TrackerConfig {
         this.videoInHud = true;
     }
 
+    /** Saved in the background: see {@link DiskWriter}. */
     public void save() {
-        try {
-            Files.createDirectories(this.file.getParent());
-            Files.writeString(this.file, GSON.toJson(this), StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            TutorialTracker.LOGGER.warn("Could not save {}", this.file, e);
-        }
+        DiskWriter.write(this.file, GSON.toJson(this));
     }
 }

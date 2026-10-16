@@ -39,12 +39,18 @@ public final class TutorialTracker {
     private TutorialTracker() {
     }
 
-    public static void init(Path gameDir) {
+    /**
+     * Called by each loader at start: the game folder, the loader's name, the mod's version and the jar it was loaded
+     * from (null when unknown, as in a development setup).
+     */
+    public static void init(Path gameDir, String loader, String version, Path jar) {
         Path configDir = gameDir.resolve("config").resolve(MOD_ID);
         config = TrackerConfig.load(configDir.resolve("settings.json"));
+        com.lunaos.tutorialtracker.gui.McStyle.applyTheme(config.darkMode);
         store = new ProjectStore(configDir.resolve("projects"));
         VideoTools.init(gameDir.resolve(MOD_ID).resolve("bin"));
-        LOGGER.info("Tutorial Tracker loaded, {} project(s)", store.all().size());
+        Updater.init(loader, version, jar, config.autoUpdate);
+        LOGGER.info("Tutorial Tracker {} loaded, {} project(s)", version, store.all().size());
     }
 
     public static TrackerConfig config() {
@@ -145,7 +151,9 @@ public final class TutorialTracker {
     public static void playOrPause() {
         VideoPlayer player = VideoPlayer.get();
         Project project = activeProject();
-        if (player.isActive() || player.state() == VideoPlayer.State.ENDED) {
+        // Pause or resume only the project's own video: after a new link was loaded, the old one is replaced.
+        boolean same = project == null || project.url.equals(player.url());
+        if (same && (player.isActive() || player.state() == VideoPlayer.State.ENDED)) {
             player.togglePause();
             return;
         }
@@ -198,11 +206,13 @@ public final class TutorialTracker {
         }
 
         ContainerTracker.tick(minecraft);
+        Updater.announce(minecraft);
 
         long now = System.currentTimeMillis();
         Project project = activeProject();
         VideoPlayer player = VideoPlayer.get();
-        if (project != null && player.isActive() && project.url.equals(player.url()) && now - lastPositionSave > 5000) {
+        if (project != null && player.isActive() && !player.isLive() && project.url.equals(player.url())
+            && now - lastPositionSave > 5000) {
             lastPositionSave = now;
             project.videoPosition = player.position();
             dirty = true;

@@ -2,6 +2,7 @@ package com.lunaos.tutorialtracker.project;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.lunaos.tutorialtracker.DiskWriter;
 import com.lunaos.tutorialtracker.TutorialTracker;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -101,23 +102,12 @@ public final class ProjectStore {
 
     public void delete(Project project) {
         this.projects.remove(project);
-        try {
-            Files.deleteIfExists(file(project));
-        } catch (IOException e) {
-            TutorialTracker.LOGGER.warn("Could not delete project {}", project.id, e);
-        }
+        DiskWriter.delete(file(project));
     }
 
+    /** Saved in the background: see {@link DiskWriter}. */
     public void save(Project project) {
-        try {
-            Files.createDirectories(this.dir);
-            Path target = file(project);
-            Path temp = target.resolveSibling(target.getFileName() + ".tmp");
-            Files.writeString(temp, GSON.toJson(project), StandardCharsets.UTF_8);
-            Files.move(temp, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            TutorialTracker.LOGGER.warn("Could not save project {}", project.id, e);
-        }
+        DiskWriter.write(file(project), GSON.toJson(project));
     }
 
     private Path file(Project project) {

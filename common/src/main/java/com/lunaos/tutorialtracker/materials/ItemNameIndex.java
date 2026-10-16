@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.locale.Language;
@@ -142,8 +143,11 @@ public final class ItemNameIndex implements MaterialParser.ItemNames {
         return item == Items.AIR ? null : item;
     }
 
+    /** Item ids are looked up for every stack counted, many times a second: made once per item. */
+    private static final Map<Item, String> IDS = new ConcurrentHashMap<>();
+
     public static String id(Item item) {
-        return BuiltInRegistries.ITEM.getKey(item).toString();
+        return IDS.computeIfAbsent(item, i -> BuiltInRegistries.ITEM.getKey(i).toString());
     }
 
     @Override

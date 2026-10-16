@@ -2,6 +2,7 @@ package com.lunaos.tutorialtracker.gui;
 
 import com.lunaos.tutorialtracker.TrackerConfig;
 import com.lunaos.tutorialtracker.TutorialTracker;
+import com.lunaos.tutorialtracker.Updater;
 import com.lunaos.tutorialtracker.inventory.ContainerTracker;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -60,7 +61,7 @@ public class SettingsScreen extends Screen {
         this.previewWidth = Math.max(40, Math.min(maxPreviewWidth, maxPreviewHeight * this.width / this.height));
         this.previewHeight = this.previewWidth * this.height / this.width;
         this.scale = this.previewWidth / (float) this.width;
-        int column = 7 * STEP - 2;
+        int column = 8 * STEP - 2;
         int right = 12 + this.previewHeight + 24;
         this.panelHeight = 22 + Math.max(column, right) + 30;
         this.panelX = (this.width - this.panelWidth) / 2;
@@ -70,6 +71,14 @@ public class SettingsScreen extends Screen {
         this.previewX = left + COLUMN + 8 + (maxPreviewWidth - this.previewWidth) / 2;
         this.previewY = y + 12;
 
+        option(left, y, () -> Component.translatable("settings.tutorialtracker.theme",
+                Component.translatable(config.darkMode ? "settings.tutorialtracker.theme.dark"
+                    : "settings.tutorialtracker.theme.light")),
+            b -> {
+                config.darkMode = !config.darkMode;
+                McStyle.applyTheme(config.darkMode);
+            });
+        y += STEP;
         option(left, y, () -> Component.translatable("settings.tutorialtracker.hud", onOff(config.hudVisible)),
             b -> config.hudVisible = !config.hudVisible);
         y += STEP;
@@ -111,8 +120,19 @@ public class SettingsScreen extends Screen {
             .tooltip(Tooltip.create(Component.translatable("screen.tutorialtracker.arrange.tooltip")))
             .bounds(this.previewX + this.previewWidth - half, buttonY, half, 20).build());
 
+        // The bottom row: updates on or off, and done.
+        int bottom = this.panelY + this.panelHeight - 26;
+        int halfRow = (this.panelWidth - 16 - 4) / 2;
+        option(left, bottom, halfRow, () -> Component.translatable("settings.tutorialtracker.auto_update",
+                onOff(config.autoUpdate)),
+            b -> {
+                config.autoUpdate = !config.autoUpdate;
+                if (config.autoUpdate) {
+                    Updater.check();
+                }
+            });
         this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> this.onClose())
-            .bounds(this.width / 2 - 100, this.panelY + this.panelHeight - 26, 200, 20).build());
+            .bounds(left + halfRow + 4, bottom, halfRow, 20).build());
     }
 
     private boolean inPreview(double x, double y) {
@@ -162,11 +182,15 @@ public class SettingsScreen extends Screen {
     }
 
     private void option(int x, int y, Supplier<Component> label, Consumer<Button> change) {
+        option(x, y, COLUMN, label, change);
+    }
+
+    private void option(int x, int y, int width, Supplier<Component> label, Consumer<Button> change) {
         this.addRenderableWidget(Button.builder(label.get(), b -> {
             change.accept(b);
             TutorialTracker.config().save();
             b.setMessage(label.get());
-        }).bounds(x, y, COLUMN, 20).build());
+        }).bounds(x, y, width, 20).build());
     }
 
     @Override
@@ -178,6 +202,25 @@ public class SettingsScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         McStyle.label(graphics, this.font, this.title, this.panelX + 8, this.panelY + 8);
+        // How the updater is doing, at the right of the title.
+        Component update = switch (Updater.state()) {
+            case READY -> Component.translatable("settings.tutorialtracker.update.ready", Updater.newVersion());
+            case DOWNLOADING -> Component.translatable("settings.tutorialtracker.update.downloading",
+                Updater.newVersion());
+            case CHECKING -> Component.translatable("settings.tutorialtracker.update.checking");
+            case UP_TO_DATE -> Component.translatable("settings.tutorialtracker.update.current");
+            case FAILED -> Component.translatable("settings.tutorialtracker.update.failed");
+            case OFF -> null;
+        };
+        if (update != null) {
+            int titleEnd = this.panelX + 8 + this.font.width(this.title) + 12;
+            int room = this.panelX + this.panelWidth - 8 - titleEnd;
+            String text = HudRenderer.ellipsize(this.font, update.getString(), room);
+            int color = Updater.state() == Updater.State.READY ? McStyle.DARK_GREEN
+                : Updater.state() == Updater.State.FAILED ? McStyle.DARK_RED : McStyle.LABEL_DISABLED;
+            McStyle.label(graphics, this.font, text, this.panelX + this.panelWidth - 8 - this.font.width(text),
+                this.panelY + 8, color);
+        }
         McStyle.label(graphics, this.font, HudRenderer.ellipsize(this.font,
                 Component.translatable("settings.tutorialtracker.windows").getString(), this.previewWidth),
             this.previewX, this.previewY - 11, McStyle.LABEL);
@@ -189,7 +232,7 @@ public class SettingsScreen extends Screen {
     private void extractPreview(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         int x = this.previewX;
         int y = this.previewY;
-        McStyle.inset(graphics, x, y, this.previewWidth, this.previewHeight, 0xFF3A5F8A);
+        McStyle.inset(graphics, x, y, this.previewWidth, this.previewHeight, McStyle.PREVIEW);
         graphics.enableScissor(x, y, x + this.previewWidth, y + this.previewHeight);
         graphics.pose().pushMatrix();
         graphics.pose().translate(x, y);

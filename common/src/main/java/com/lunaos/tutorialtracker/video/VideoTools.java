@@ -52,6 +52,8 @@ public final class VideoTools {
         public volatile long total;
         public volatile boolean finished;
         public volatile String error;
+        /** The file was held by another program (on Windows, mostly the virus scanner looking at a new download). */
+        public volatile boolean locked;
 
         public float fraction() {
             return this.total > 0 ? Math.min(1.0f, this.done / (float) this.total) : 0.0f;
@@ -117,7 +119,8 @@ public final class VideoTools {
             }
             try {
                 Path candidate = Path.of(entry.trim().replace("\"", "")).resolve(name);
-                if (Files.isRegularFile(candidate) && Files.isExecutable(candidate)) {
+                if (Files.isRegularFile(candidate) && Files.isExecutable(candidate)
+                    && (tool != Tool.FFMPEG || recentEnough(candidate))) {
                     return candidate;
                 }
             } catch (RuntimeException ignored) {
@@ -125,6 +128,27 @@ public final class VideoTools {
             }
         }
         return null;
+    }
+
+    /** Whether an installed ffmpeg is new enough, by path; asked once per path. */
+    private static final java.util.Map<Path, Boolean> RECENT = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * ffmpeg before 7 cannot read the fragmented MP4 streams Twitch sends (the picture comes out green or not at
+     * all): such an old installed one is passed over, so the mod offers its own download instead. Builds from the
+     * development branch call themselves "N-…" and are new.
+     */
+    private static boolean recentEnough(Path ffmpeg) {
+        return RECENT.computeIfAbsent(ffmpeg, path -> {
+            try {
+                Result result = run(List.of(path.toString(), "-hide_banner", "-version"), 10);
+                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("ffmpeg version n?(\\d+)\\.")
+                    .matcher(result.stdout);
+                return !matcher.find() || Integer.parseInt(matcher.group(1)) >= 7;
+            } catch (Exception e) {
+                return true;
+            }
+        });
     }
 
     /**
@@ -178,6 +202,7 @@ public final class VideoTools {
         Thread thread = new Thread(() -> {
             try {
                 Files.createDirectories(binDir);
+                removeLeftovers();
                 if (ytDlp() == null) {
                     installYtDlp(progress);
                 }
@@ -189,7 +214,7 @@ public final class VideoTools {
                 }
             } catch (Exception e) {
                 TutorialTracker.LOGGER.warn("Downloading the video tools failed", e);
-                progress.error = e.getMessage() == null ? e.toString() : e.getMessage();
+                fail(progress, e);
             } finally {
                 progress.finished = true;
             }
@@ -223,7 +248,8 @@ public final class VideoTools {
                     }
                 }
             } catch (Exception e) {
-                progress.error = e.getMessage() == null ? e.toString() : e.getMessage();
+                TutorialTracker.LOGGER.warn("Updating yt-dlp failed", e);
+                fail(progress, e);
             } finally {
                 progress.finished = true;
             }
@@ -245,7 +271,7 @@ public final class VideoTools {
         }
         Path target = binDir.resolve(WINDOWS ? "yt-dlp.exe" : "yt-dlp");
         Path temp = download("https://github.com/yt-dlp/yt-dlp/releases/latest/download/" + asset, progress);
-        Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
+        moveInto(temp, target);
         makeRunnable(target);
     }
 
@@ -255,12 +281,12 @@ public final class VideoTools {
         if (WINDOWS) {
             Path zip = download("https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip", progress);
             unzipEntry(zip, "/bin/ffmpeg.exe", target);
-            Files.deleteIfExists(zip);
+            deleteQuietly(zip);
         } else if (MAC) {
             Path zip = download("https://ffmpeg.martin-riedl.de/redirect/latest/macos/" + (ARM ? "arm64" : "amd64")
                 + "/snapshot/ffmpeg.zip", progress);
             unzipEntry(zip, "ffmpeg", target);
-            Files.deleteIfExists(zip);
+            deleteQuietly(zip);
         } else {
             Path archive = download("https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-"
                 + (ARM ? "linuxarm64" : "linux64") + "-gpl.tar.xz", progress);
@@ -275,11 +301,11 @@ public final class VideoTools {
                     Path found = files.filter(p -> p.getFileName().toString().equals("ffmpeg")
                         && p.getParent().getFileName().toString().equals("bin")).findFirst()
                         .orElseThrow(() -> new IOException("ffmpeg not found in the archive"));
-                    Files.move(found, target, StandardCopyOption.REPLACE_EXISTING);
+                    moveInto(found, target);
                 }
             } finally {
                 deleteTree(unpack);
-                Files.deleteIfExists(archive);
+                deleteQuietly(archive);
             }
         }
         makeRunnable(target);
@@ -298,7 +324,7 @@ public final class VideoTools {
         Path target = binDir.resolve(WINDOWS ? "deno.exe" : "deno");
         Path zip = download("https://github.com/denoland/deno/releases/latest/download/deno-" + triple + ".zip", progress);
         unzipEntry(zip, WINDOWS ? "deno.exe" : "deno", target);
-        Files.deleteIfExists(zip);
+        deleteQuietly(zip);
         makeRunnable(target);
     }
 
@@ -366,7 +392,7 @@ public final class VideoTools {
     }
 
     /** Extracts the entry whose path ends with {@code suffix} (or is exactly it). */
-    private static void unzipEntry(Path zip, String suffix, Path target) throws IOException {
+    private static void unzipEntry(Path zip, String suffix, Path target) throws IOException, InterruptedException {
         try (ZipInputStream in = new ZipInputStream(Files.newInputStream(zip))) {
             String wanted = suffix.replaceFirst("^/", "");
             ZipEntry entry;
@@ -375,12 +401,75 @@ public final class VideoTools {
                 if (!entry.isDirectory() && (name.equals(wanted) || name.endsWith("/" + wanted))) {
                     Path temp = target.resolveSibling(target.getFileName() + ".part");
                     Files.copy(in, temp, StandardCopyOption.REPLACE_EXISTING);
-                    Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
+                    moveInto(temp, target);
                     return;
                 }
             }
         }
         throw new IOException(suffix + " not found in the download");
+    }
+
+    /**
+     * Puts a finished download in place. On Windows a file just written is often held for a moment by the virus
+     * scanner (or the old program is still running), and the move fails with "in use": it is tried again for a few
+     * seconds before giving up.
+     */
+    private static void moveInto(Path from, Path to) throws IOException, InterruptedException {
+        for (int attempt = 1; ; attempt++) {
+            try {
+                Files.move(from, to, StandardCopyOption.REPLACE_EXISTING);
+                return;
+            } catch (java.nio.file.FileSystemException e) {
+                if (attempt >= 10) {
+                    throw e;
+                }
+                Thread.sleep(500L * Math.min(attempt, 4));
+            }
+        }
+    }
+
+    /**
+     * Cleans up a downloaded archive. Failing to is no reason to report the install as failed: the program is in
+     * place by then. A file the virus scanner still holds goes when the game closes, or on the next download.
+     */
+    private static void deleteQuietly(Path file) {
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                Files.deleteIfExists(file);
+                return;
+            } catch (IOException e) {
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+        file.toFile().deleteOnExit();
+    }
+
+    /** Half-finished downloads from an earlier try. */
+    private static void removeLeftovers() {
+        try (Stream<Path> files = Files.list(binDir)) {
+            files.filter(p -> p.getFileName().toString().endsWith(".part")).forEach(VideoTools::deleteQuietly);
+        } catch (IOException ignored) {
+            // Nothing to clean.
+        }
+    }
+
+    /** A message a player can read: the file's name and what went wrong, not a path across the whole screen. */
+    private static void fail(Progress progress, Exception e) {
+        if (e instanceof java.nio.file.FileSystemException fs) {
+            String file = fs.getFile() == null ? "" : Path.of(fs.getFile()).getFileName().toString();
+            String reason = fs.getReason() != null ? fs.getReason()
+                : e instanceof java.nio.file.AccessDeniedException ? "access denied"
+                : e instanceof java.nio.file.NoSuchFileException ? "not found" : e.getClass().getSimpleName();
+            progress.error = file.isEmpty() ? reason : file + ": " + reason;
+            progress.locked = !(e instanceof java.nio.file.NoSuchFileException);
+            return;
+        }
+        progress.error = e.getMessage() == null ? e.toString() : e.getMessage();
     }
 
     private static void deleteTree(Path dir) {

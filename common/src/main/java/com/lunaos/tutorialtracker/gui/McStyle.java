@@ -9,25 +9,47 @@ import net.minecraft.resources.Identifier;
 
 /**
  * Drawing in the game's own style, so the mod looks like part of Minecraft: the grey inventory window with its
- * bevelled edge, inventory slots, the experience bar as progress bar and the tooltip frame on the HUD.
+ * bevelled edge, inventory slots, the experience bar as progress bar and the tooltip frame on the HUD. The windows
+ * come in the game's light grey or, if chosen, in dark.
  */
 public final class McStyle {
 
+    /*
+     * The colours below follow the chosen design, light (the game's own grey windows) or dark; see applyTheme. They
+     * are read when drawing, so switching takes effect on the next frame.
+     */
+
     /** The inventory window's colours. */
-    public static final int PANEL = 0xFFC6C6C6;
-    public static final int PANEL_LIGHT = 0xFFFFFFFF;
-    public static final int PANEL_SHADOW = 0xFF555555;
+    public static int PANEL;
+    public static int PANEL_LIGHT;
+    public static int PANEL_SHADOW;
     public static final int OUTLINE = 0xFF000000;
     /** Slot and inset colours. */
-    public static final int SLOT = 0xFF8B8B8B;
-    public static final int SLOT_DARK = 0xFF373737;
-    /** Labels on the grey window, like "Chest" and "Inventory". */
-    public static final int LABEL = 0xFF404040;
+    public static int SLOT;
+    public static int SLOT_DARK;
+    /** The bright lower right edge of a slot or inset. */
+    public static int SLOT_LIGHT;
+    /**
+     * Labels on the window, like "Chest" and "Inventory". Not quite the game's 0x404040: some dark interface packs
+     * come with mods that repaint text of exactly that colour light, which would leave it unreadable on our window.
+     */
+    public static int LABEL;
+    /** A label for something that cannot be used right now. */
+    public static int LABEL_DISABLED;
 
     /** Text on the window: darker versions of the chat colours, readable on grey without a shadow. */
-    public static final int DARK_GREEN = 0xFF00AA00;
-    public static final int DARK_GOLD = 0xFFAA6E00;
-    public static final int DARK_RED = 0xFFAA0000;
+    public static int DARK_GREEN;
+    public static int DARK_GOLD;
+    public static int DARK_RED;
+    /** The empty area of the window arranging preview. */
+    public static int PREVIEW;
+
+    private static boolean dark;
+
+    static {
+        applyTheme(false);
+    }
+
     /** Chat colours, for text with a shadow on dark backgrounds. */
     public static final int GREEN = 0xFF55FF55;
     public static final int YELLOW = 0xFFFFFF55;
@@ -40,6 +62,42 @@ public final class McStyle {
     private static final Identifier XP_PROGRESS = Identifier.withDefaultNamespace("hud/experience_bar_progress");
 
     private McStyle() {
+    }
+
+    /** Light: the game's grey windows. Dark: near-black windows with light text, easier on the eyes at night. */
+    public static void applyTheme(boolean darkTheme) {
+        dark = darkTheme;
+        if (darkTheme) {
+            PANEL = 0xFF2E2E30;
+            PANEL_LIGHT = 0xFF4A4A4E;
+            PANEL_SHADOW = 0xFF161618;
+            SLOT = 0xFF1E1E20;
+            SLOT_DARK = 0xFF0C0C0D;
+            SLOT_LIGHT = 0xFF505054;
+            LABEL = 0xFFE6E6E6;
+            LABEL_DISABLED = 0xFF7A7A7A;
+            DARK_GREEN = 0xFF5CD65C;
+            DARK_GOLD = 0xFFFFC23D;
+            DARK_RED = 0xFFFF6666;
+            PREVIEW = 0xFF1F3550;
+        } else {
+            PANEL = 0xFFC6C6C6;
+            PANEL_LIGHT = 0xFFFFFFFF;
+            PANEL_SHADOW = 0xFF555555;
+            SLOT = 0xFF8B8B8B;
+            SLOT_DARK = 0xFF373737;
+            SLOT_LIGHT = 0xFFFFFFFF;
+            LABEL = 0xFF3F3F3F;
+            LABEL_DISABLED = 0xFF8B8B8B;
+            DARK_GREEN = 0xFF00AA00;
+            DARK_GOLD = 0xFFAA6E00;
+            DARK_RED = 0xFFAA0000;
+            PREVIEW = 0xFF3A5F8A;
+        }
+    }
+
+    public static boolean isDark() {
+        return dark;
     }
 
     /** The inventory window: grey, white top-left edge, dark bottom-right edge, black rounded outline. */
@@ -74,12 +132,19 @@ public final class McStyle {
         graphics.fill(x, y, x + width, y + height, face);
         graphics.fill(x - 1, y - 1, x + width, y, SLOT_DARK);
         graphics.fill(x - 1, y, x, y + height, SLOT_DARK);
-        graphics.fill(x, y + height, x + width + 1, y + height + 1, PANEL_LIGHT);
-        graphics.fill(x + width, y, x + width + 1, y + height, PANEL_LIGHT);
+        graphics.fill(x, y + height, x + width + 1, y + height + 1, SLOT_LIGHT);
+        graphics.fill(x + width, y, x + width + 1, y + height, SLOT_LIGHT);
     }
 
     /** An inventory slot, 18 by 18 with the item drawn at +1, +1. */
     public static void slot(GuiGraphicsExtractor graphics, int x, int y) {
+        if (dark) {
+            // The slot sprite is light grey; drawn by hand in the dark colours, same shape.
+            graphics.fill(x, y, x + 18, y + 18, SLOT_DARK);
+            graphics.fill(x + 1, y + 1, x + 18, y + 18, SLOT_LIGHT);
+            graphics.fill(x + 1, y + 1, x + 17, y + 17, SLOT);
+            return;
+        }
         graphics.blitSprite(RenderPipelines.GUI_TEXTURED, SLOT_SPRITE, x, y, 18, 18);
     }
 
@@ -99,7 +164,7 @@ public final class McStyle {
         TooltipRenderUtil.extractTooltipBackground(graphics, x, y, width, height, null);
     }
 
-    /** A window label: dark grey, no shadow, as the game writes "Chest" on a chest. */
+    /** A window label: dark grey (light in the dark design), no shadow, as the game writes "Chest" on a chest. */
     public static void label(GuiGraphicsExtractor graphics, Font font, Component text, int x, int y) {
         graphics.text(font, text, x, y, LABEL, false);
     }

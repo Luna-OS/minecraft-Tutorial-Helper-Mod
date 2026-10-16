@@ -16,8 +16,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Fetches the text of a tutorial: for a YouTube video its title and description (where the material list usually
- * is), for any other page its visible text.
+ * Fetches the text of a tutorial: for a YouTube or Twitch video its title and description (where the material list
+ * usually is), for any other page its visible text.
  */
 public final class TutorialFetcher {
 
@@ -66,6 +66,9 @@ public final class TutorialFetcher {
                 if (videoId != null) {
                     return fetchYouTube(url, videoId);
                 }
+                if (isTwitch(url)) {
+                    return fetchTwitch(url);
+                }
                 return fetchPage(url);
             } catch (IOException e) {
                 throw new RuntimeException(e.getMessage() == null ? e.toString() : e.getMessage(), e);
@@ -103,6 +106,29 @@ public final class TutorialFetcher {
             throw failure;
         }
         throw new IOException(BLOCKED, failure);
+    }
+
+    /** A Twitch video, clip or channel (whose link plays it live). */
+    public static boolean isTwitch(String url) {
+        return url != null && url.matches("(?i)^https?://([a-z0-9-]+\\.)*twitch\\.tv/.*");
+    }
+
+    /**
+     * Twitch pages are built by script and hold no text to read: yt-dlp asks Twitch for the title and description
+     * instead. Without yt-dlp, the page's title is all there is.
+     */
+    private static Tutorial fetchTwitch(String url) throws IOException, InterruptedException {
+        if (VideoTools.ytDlp() != null) {
+            JsonObject info = VideoTools.describe(url);
+            if (info != null) {
+                String title = string(info, "title");
+                if (title.isEmpty()) {
+                    title = string(info, "uploader");
+                }
+                return new Tutorial(title, string(info, "description"), null);
+            }
+        }
+        return fetchPage(url);
     }
 
     private static Tutorial fetchPage(String url) throws IOException, InterruptedException {

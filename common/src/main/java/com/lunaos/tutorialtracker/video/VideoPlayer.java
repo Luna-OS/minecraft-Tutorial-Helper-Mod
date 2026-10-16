@@ -37,8 +37,12 @@ public final class VideoPlayer {
         ERROR
     }
 
+    /**
+     * {@code live}: a stream running now (a Twitch channel, a YouTube live): no length, no seeking. {@code hls}: an
+     * HLS playlist (all of Twitch, YouTube lives) rather than one file.
+     */
     record Stream(String title, String videoUrl, String audioUrl, String headers, int width, int height,
-                  double duration) {
+                  double duration, boolean live, boolean hls) {
     }
 
     private static final VideoPlayer INSTANCE = new VideoPlayer();
@@ -103,6 +107,12 @@ public final class VideoPlayer {
         return current != null ? current.title : "";
     }
 
+    /** A live stream: shown with a LIVE mark instead of a time, and it cannot be wound. */
+    public boolean isLive() {
+        Stream current = this.stream;
+        return current != null && current.live;
+    }
+
     /** Starts the video at a link, from a position in seconds. */
     public synchronized void open(String pageUrl, double startAt) {
         stopSession();
@@ -121,7 +131,9 @@ public final class VideoPlayer {
                         return;
                     }
                     this.stream = resolved;
-                    double start = resolved.duration > 0 && startAt > resolved.duration - 2 ? 0 : Math.max(0, startAt);
+                    // A live stream always starts at what is happening now.
+                    double start = resolved.live || resolved.duration > 0 && startAt > resolved.duration - 2 ? 0
+                        : Math.max(0, startAt);
                     startSession(start, false);
                 }
             } catch (Exception e) {
@@ -166,6 +178,11 @@ public final class VideoPlayer {
 
     public synchronized void resume() {
         Session current = this.session;
+        if (current != null && this.state == State.PAUSED && this.stream != null && this.stream.live) {
+            // Paused live, the stream ran on without us: pick it up where it is now, not where it was.
+            startSession(0, false);
+            return;
+        }
         if (current != null && this.state == State.PAUSED) {
             current.setPaused(false);
             this.state = State.PLAYING;
@@ -173,7 +190,7 @@ public final class VideoPlayer {
     }
 
     public synchronized void seek(double seconds) {
-        if (this.stream == null) {
+        if (this.stream == null || this.stream.live) {
             return;
         }
         double target = Math.max(0, seconds);
@@ -216,6 +233,15 @@ public final class VideoPlayer {
             return;
         }
         double duration = this.stream.duration;
+        if (this.stream.live && ended.restarts < 3) {
+            // A live stream has no end of its own: the connection dropped. Join it again where it is now.
+            Session next = new Session(this.stream, 0);
+            next.restarts = ended.restarts + 1;
+            stopSession();
+            this.session = next;
+            next.start(false);
+            return;
+        }
         if (duration > 0 && at < duration - 3 && ended.restarts < 3) {
             // The connection dropped (a long pause does that): carry on from where it stopped.
             Session next = new Session(this.stream, at);
@@ -351,12 +377,15 @@ public final class VideoPlayer {
         }
         JsonObject info = JsonParser.parseString(result.stdout()).getAsJsonObject();
         String title = string(info, "title");
+        boolean live = "true".equals(string(info, "is_live"))
+            || "is_live".equals(string(info, "live_status"));
         double duration = info.has("duration") && info.get("duration").isJsonPrimitive()
             ? info.get("duration").getAsDouble() : 0;
 
         String videoUrl = null;
         String audioUrl = null;
         String headers = headers(info);
+        String protocol = string(info, "protocol");
         int width = integer(info, "width");
         int height = integer(info, "height");
         JsonArray requested = info.has("requested_formats") && info.get("requested_formats").isJsonArray()
@@ -368,6 +397,7 @@ public final class VideoPlayer {
                 boolean hasAudio = !"none".equals(string(format1, "acodec"));
                 if (hasVideo && videoUrl == null) {
                     videoUrl = string(format1, "url");
+                    protocol = string(format1, "protocol");
                     width = integer(format1, "width");
                     height = integer(format1, "height");
                     if (format1.has("http_headers")) {
@@ -390,7 +420,7 @@ public final class VideoPlayer {
             throw new IOException("no video stream found");
         }
         return new Stream(title, videoUrl, audioUrl == null || audioUrl.isEmpty() ? null : audioUrl, headers,
-            width, height, duration);
+            width, height, live ? 0 : duration, live, protocol.startsWith("m3u8"));
     }
 
     private static String headers(JsonObject object) {
@@ -546,20 +576,26 @@ public final class VideoPlayer {
                     command.add("-headers");
                     command.add(this.stream.headers);
                 }
-                command.addAll(List.of("-reconnect", "1", "-reconnect_streamed", "1", "-reconnect_delay_max", "5"));
+                // Picks up a dropped connection to a video file. Not for an HLS playlist, which fetches its
+                // pieces itself: there ffmpeg would take the end of every piece for a dropped connection and
+                // reconnect forever without showing a picture.
+                if (!this.stream.hls) {
+                    command.addAll(List.of("-reconnect", "1", "-reconnect_streamed", "1", "-reconnect_delay_max", "5"));
+                }
             }
             if (this.start > 0.05) {
                 command.add("-ss");
                 command.add(String.format(java.util.Locale.ROOT, "%.3f", this.start));
             }
-            command.add("-i");
-            command.add(url);
+            // Two decoding threads are plenty for these sizes; ffmpeg would otherwise take one per core and compete
+            // with the game's own threads for them.
+            command.addAll(List.of("-threads", "2", "-i", url));
             return command;
         }
 
         private List<String> videoCommand() {
             List<String> command = input(this.stream.videoUrl);
-            command.addAll(List.of("-an", "-sn", "-vf",
+            command.addAll(List.of("-an", "-sn", "-filter_threads", "1", "-vf",
                 "scale=" + this.width + ":" + this.height + ":flags=bilinear,fps=" + FPS,
                 "-pix_fmt", "rgba", "-f", "rawvideo", "pipe:1"));
             return command;

@@ -22,7 +22,7 @@
   "message.tutorialtracker.pasted": "%s materials recognised",
   "screen.tutorialtracker.title": "Tutorial Tracker",
   "screen.tutorialtracker.url": "Tutorial link",
-  "screen.tutorialtracker.url.hint": "Paste a YouTube or web link to the tutorial (Ctrl+V / ⌘+V)",
+  "screen.tutorialtracker.url.hint": "Paste a YouTube, Twitch or web link (Ctrl+V / Cmd+V)",
   "screen.tutorialtracker.load": "Load",
   "screen.tutorialtracker.unnamed": "New project",
   "screen.tutorialtracker.empty": "No materials yet. Paste the link to a tutorial above and click \"Load\" – the material list is read from the video description. If it is somewhere else, use \"Paste material list\".",
@@ -98,5 +98,16 @@
   "screen.tutorialtracker.arrange.video": "Video: %s",
   "screen.tutorialtracker.arrange.reset": "Reset",
   "settings.tutorialtracker.arrange": "Full screen …",
-  "settings.tutorialtracker.windows": "Windows: drag · bottom right corner = size"
+  "settings.tutorialtracker.windows": "Windows: drag · bottom right corner = size",
+  "screen.tutorialtracker.tools.locked": "Another program is holding the file, usually the virus scanner checking the new download. Wait a few seconds and click the button again.",
+  "settings.tutorialtracker.theme": "Design: %s",
+  "settings.tutorialtracker.theme.light": "Light",
+  "settings.tutorialtracker.theme.dark": "Dark",
+  "settings.tutorialtracker.auto_update": "Auto update: %s",
+  "settings.tutorialtracker.update.ready": "Version %s installs on the next start",
+  "settings.tutorialtracker.update.downloading": "Downloading version %s …",
+  "settings.tutorialtracker.update.checking": "Checking for updates …",
+  "settings.tutorialtracker.update.current": "Up to date",
+  "settings.tutorialtracker.update.failed": "Update check failed",
+  "message.tutorialtracker.update_ready": "Tutorial Tracker %s is downloaded and installs on the next start."
 }

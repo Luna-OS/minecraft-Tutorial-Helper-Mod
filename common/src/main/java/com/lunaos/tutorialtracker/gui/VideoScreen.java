@@ -135,8 +135,12 @@ public class VideoScreen extends Screen {
         player.draw(graphics, this.videoX, this.videoY, this.videoWidth, this.videoHeight, true);
         double duration = player.duration();
         double position = player.position();
-        McStyle.xpBar(graphics, this.barX, this.barY, this.barWidth, duration > 0 ? position / duration : 0);
-        if (duration > 0) {
+        boolean live = player.isLive();
+        McStyle.xpBar(graphics, this.barX, this.barY, this.barWidth, live ? 1 : duration > 0 ? position / duration : 0);
+        if (live) {
+            int liveX = this.width - 12 - 70 - 6 - this.font.width(HudRenderer.LIVE);
+            McStyle.label(graphics, this.font, HudRenderer.LIVE, liveX, this.height - 4 - 8 - 14, McStyle.DARK_RED);
+        } else if (duration > 0) {
             String time = HudRenderer.time(position) + " / " + HudRenderer.time(duration);
             int timeX = this.width - 12 - 70 - 6 - this.font.width(time);
             McStyle.label(graphics, this.font, time, timeX, this.height - 4 - 8 - 14, McStyle.LABEL);
