@@ -11,10 +11,21 @@ sourceSets.main {
 	resources.srcDir rootProject.commonResources
 }
 
+repositories {
+	// Mod Menu, only to compile its config screen hook against; players without it lose nothing.
+	exclusiveContent {
+		forRepository {
+			maven { name = 'TerraformersMC'; url = 'https://maven.terraformersmc.com/releases/' }
+		}
+		filter { includeGroup 'com.terraformersmc' }
+	}
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+	compileOnly("com.terraformersmc:modmenu:${rootProject.modmenu_version}") { transitive = false }
 }
 
 loom {

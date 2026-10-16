@@ -98,7 +98,7 @@ public final class Popups {
 
     // --- Drawing ------------------------------------------------------------------------------------------------
 
-    /** The frame and title bar every window has; in edit mode also the close button and the resize grip. */
+    /** The frame and title bar every window has; in edit mode also the resize grip. */
     private static void frame(GuiGraphicsExtractor graphics, Font font, Rect rect, String title, int titleColor,
                               String right, int rightColor, boolean edit, int controlsWidth) {
         McStyle.tooltipBox(graphics, rect.x(), rect.y(), rect.width(), rect.height());
@@ -133,23 +133,23 @@ public final class Popups {
         graphics.centeredText(font, label, x + BUTTON / 2 + 1, y + 1, color);
     }
 
-    /** Where a window's close button is (edit mode). */
+    /** Where a window's close button is (with controls). */
     static Rect closeButton(Rect rect) {
         return new Rect(rect.x() + rect.width() - BUTTON - 1, rect.y() + 1, BUTTON, BUTTON);
     }
 
-    /** The video window's back, play/pause and forward buttons (edit mode), left of the close button. */
+    /** The video window's back, play/pause and forward buttons (with controls), left of the close button. */
     static Rect videoButton(Rect rect, int index) {
         Rect close = closeButton(rect);
         return new Rect(close.x() - (3 - index) * (BUTTON + 2), close.y(), BUTTON, BUTTON);
     }
 
-    static Rect grip(Rect rect) {
-        return new Rect(rect.x() + rect.width() - GRIP, rect.y() + rect.height() - GRIP, GRIP, GRIP);
-    }
-
+    /**
+     * The list window. {@code edit} adds the resize grip, {@code controls} the close button (the settings' small
+     * preview has the grip but no buttons, they would be too small to hit there).
+     */
     public static void drawList(GuiGraphicsExtractor graphics, Font font, Project project, Rect rect, boolean edit,
-                                int mouseX, int mouseY) {
+                                boolean controls, int mouseX, int mouseY) {
         TrackerConfig config = TutorialTracker.config();
         String title = project == null || project.name.isBlank()
             ? Component.translatable("hud.tutorialtracker.materials").getString() : project.name;
@@ -165,8 +165,8 @@ public final class Popups {
         int total = project == null ? 0 : project.materials.size();
         String counter = total == 0 ? "" : done + "/" + total;
         frame(graphics, font, rect, title, McStyle.YELLOW, counter,
-            total > 0 && done == total ? McStyle.GREEN : McStyle.GRAY, edit, edit ? BUTTON + 3 : 0);
-        if (edit) {
+            total > 0 && done == total ? McStyle.GREEN : McStyle.GRAY, edit, controls ? BUTTON + 3 : 0);
+        if (controls) {
             Rect close = closeButton(rect);
             titleButton(graphics, font, close.x(), close.y(), "✕", close.contains(mouseX, mouseY), McStyle.RED);
         }
@@ -195,16 +195,17 @@ public final class Popups {
         }
     }
 
-    public static void drawVideo(GuiGraphicsExtractor graphics, Font font, Rect rect, boolean edit, int mouseX,
-                                 int mouseY) {
+    /** The video window; {@code edit} and {@code controls} as for {@link #drawList}. */
+    public static void drawVideo(GuiGraphicsExtractor graphics, Font font, Rect rect, boolean edit, boolean controls,
+                                 int mouseX, int mouseY) {
         VideoPlayer player = VideoPlayer.get();
         String title = player.title().isEmpty() ? Component.translatable("screen.tutorialtracker.video").getString()
             : player.title();
         String time = player.duration() > 0
             ? HudRenderer.time(player.position()) + "/" + HudRenderer.time(player.duration()) : "";
-        int controls = edit ? 4 * (BUTTON + 2) + 1 : 0;
-        frame(graphics, font, rect, title, McStyle.YELLOW, edit ? "" : time, McStyle.GRAY, edit, controls);
-        if (edit) {
+        int controlsWidth = controls ? 4 * (BUTTON + 2) + 1 : 0;
+        frame(graphics, font, rect, title, McStyle.YELLOW, controls ? "" : time, McStyle.GRAY, edit, controlsWidth);
+        if (controls) {
             boolean playing = player.state() == VideoPlayer.State.PLAYING || player.state() == VideoPlayer.State.LOADING;
             String[] labels = {"«", playing ? "⏸" : "▶", "»"};
             for (int i = 0; i < 3; i++) {

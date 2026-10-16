@@ -11,6 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -36,11 +37,11 @@ public final class HudRenderer {
         Project project = TutorialTracker.activeProject();
         if (config.hudVisible && project != null && !project.materials.isEmpty()) {
             Popups.drawList(graphics, minecraft.font, project, Popups.listRect(width, height, project, false), false,
-                -1, -1);
+                false, -1, -1);
         }
         VideoPlayer player = VideoPlayer.get();
         if (config.videoInHud && (player.isActive() || player.state() == VideoPlayer.State.ERROR)) {
-            Popups.drawVideo(graphics, minecraft.font, Popups.videoRect(width, height), false, -1, -1);
+            Popups.drawVideo(graphics, minecraft.font, Popups.videoRect(width, height), false, false, -1, -1);
         }
     }
 
@@ -48,7 +49,10 @@ public final class HudRenderer {
     static void drawRow(GuiGraphicsExtractor graphics, Font font, Project.Material material, int x, int y, int width) {
         Item item = ItemNameIndex.item(material.item);
         int have = ContainerTracker.have(material.item);
-        if (item != null) {
+        // In the main menu (the settings opened from the mod list) items have no components yet, so no stack can be
+        // made: the row goes without its icon and takes the name from the language file.
+        boolean stacks = item != null && item.builtInRegistryHolder().areComponentsBound();
+        if (stacks) {
             ItemStack stack = new ItemStack(item);
             graphics.pose().pushMatrix();
             graphics.pose().translate(x, y);
@@ -61,7 +65,8 @@ public final class HudRenderer {
         int textX = x + 13;
         graphics.text(font, amount, textX, y + 1, color, true);
         int nameX = textX + font.width(amount) + 4;
-        String name = item != null ? new ItemStack(item).getHoverName().getString() : material.item;
+        String name = stacks ? new ItemStack(item).getHoverName().getString()
+            : item != null ? Component.translatable(item.getDescriptionId()).getString() : material.item;
         graphics.text(font, ellipsize(font, name, x + width - nameX), nameX, y + 1, McStyle.WHITE, true);
     }
 

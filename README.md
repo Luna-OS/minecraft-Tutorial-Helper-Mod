@@ -36,6 +36,11 @@ fremden Servern. Sie läuft unter Windows, macOS (Apple Silicon und Intel) und L
   Liste und Video an der Titelleiste verschieben, an der Ecke unten rechts größer oder kleiner ziehen und mit ✕
   schließen. Im Videofenster gibt es « ▶ » zum Spulen und Abspielen. Mit Esc oder U geht es zurück ins Spiel, und
   die Fenster bleiben, wo du sie hingestellt hast.
+- **Fenster in den Mod-Einstellungen.** Die Einstellungen (über **Mod Menu** bei Fabric, die Mod-Liste bei NeoForge
+  und Forge oder *B → Einstellungen*) zeigen eine kleine Vorschau des Bildschirms. Dort ziehst du Liste und Video
+  per Drag & Drop an ihren Platz und an der Ecke unten rechts größer oder kleiner, auch im Hauptmenü ohne Welt.
+  Für genaue Positionen: Fenster anklicken, dann verschieben die Pfeiltasten (mit Shift 10 Pixel), mit Alt (Mac: ⌥)
+  ändern sie die Größe. Klappt auch mit Trackpad und Retina-Display.
 - **Mehrere Projekte.** Jedes Tutorial ist ein eigenes Projekt mit eigener Liste und eigenen Kisten.
 - **Im Minecraft-Look.** Graue Inventarfenster, Slots, die XP-Leiste als Fortschrittsbalken und der Tooltip-Rahmen
   im HUD. Deutsch und Englisch.
@@ -86,7 +91,8 @@ Materialliste und Kistenzählen funktionieren auch ohne diese Programme.
 | *frei* | Video 10 s zurück/vor, Video groß, Mini-Video ein/aus |
 
 Alle Tasten lassen sich unter *Optionen → Steuerung → Tastenbelegung → Tutorial Tracker* ändern. Im großen
-Video-Fenster pausiert die Leertaste, und die Pfeiltasten springen 5 Sekunden.
+Video-Fenster pausiert die Leertaste, und die Pfeiltasten springen 5 Sekunden. Beim Anordnen verschieben die
+Pfeiltasten das angeklickte Fenster, mit Alt (Mac: ⌥) ändern sie seine Größe.
 
 ## Gut zu wissen
 
