@@ -25,6 +25,9 @@ final class PopupArranger {
         VIDEO_CONTROL
     }
 
+    /** How far the frame drawn around a window reaches past it. */
+    private static final int FRAME = 4;
+
     private Popups.Kind dragging;
     private Drag dragMode;
     private double grabX;
@@ -71,6 +74,19 @@ final class PopupArranger {
      * the preview so it can still be hit.
      */
     Press press(double x, double y, int screenWidth, int screenHeight, boolean controls, double grip) {
+        // The corner first: it can be grabbed on the frame drawn around the window too.
+        for (Popups.Kind kind : new Popups.Kind[] {Popups.Kind.VIDEO, Popups.Kind.LIST}) {
+            if (shown(kind)) {
+                Popups.Rect rect = rect(kind, screenWidth, screenHeight);
+                int right = rect.x() + rect.width();
+                int bottom = rect.y() + rect.height();
+                if (x >= right - grip && x < right + FRAME && y >= bottom - grip && y < bottom + FRAME) {
+                    this.selected = kind;
+                    start(kind, Drag.RESIZE, x - right, y - bottom);
+                    return Press.DRAG;
+                }
+            }
+        }
         Popups.Kind kind = windowAt(x, y, screenWidth, screenHeight);
         this.selected = kind;
         if (kind == null) {
@@ -105,18 +121,14 @@ final class PopupArranger {
                 }
             }
         }
-        int right = rect.x() + rect.width();
-        int bottom = rect.y() + rect.height();
-        if (x >= right - grip && y >= bottom - grip) {
-            start(kind, Drag.RESIZE, x - right, y - bottom);
-        } else if (controls && kind == Popups.Kind.VIDEO && y >= rect.y() + Popups.TITLE && y < bottom - 7) {
+        if (controls && kind == Popups.Kind.VIDEO && y >= rect.y() + Popups.TITLE
+            && y < rect.y() + rect.height() - 7) {
             // A click on the picture plays or pauses; the title bar moves the window.
             TutorialTracker.playOrPause();
             return Press.VIDEO_CONTROL;
-        } else {
-            // The title bar or the body: either moves the window.
-            start(kind, Drag.MOVE, x - rect.x(), y - rect.y());
         }
+        // The title bar or the body: either moves the window.
+        start(kind, Drag.MOVE, x - rect.x(), y - rect.y());
         return Press.DRAG;
     }
 

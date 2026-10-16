@@ -96,6 +96,7 @@ public class SettingsScreen extends Screen {
         y += STEP;
         this.addRenderableWidget(Button.builder(Component.translatable("settings.tutorialtracker.tools"),
                 b -> this.minecraft.gui.setScreen(new ToolsScreen(this)))
+            .tooltip(Tooltip.create(Component.literal("yt-dlp · ffmpeg · Deno")))
             .bounds(left, y, COLUMN, 20).build());
 
         // Under the preview: back to the corners, or arrange at full size over the game.
