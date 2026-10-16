@@ -68,12 +68,8 @@ public final class TrackerConfig {
         this.videoInHud = true;
     }
 
+    /** Saved in the background: see {@link DiskWriter}. */
     public void save() {
-        try {
-            Files.createDirectories(this.file.getParent());
-            Files.writeString(this.file, GSON.toJson(this), StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            TutorialTracker.LOGGER.warn("Could not save {}", this.file, e);
-        }
+        DiskWriter.write(this.file, GSON.toJson(this));
     }
 }

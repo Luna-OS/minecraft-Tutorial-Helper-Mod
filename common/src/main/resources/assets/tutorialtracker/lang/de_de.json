@@ -98,5 +98,6 @@
   "screen.tutorialtracker.arrange.video": "Video: %s",
   "screen.tutorialtracker.arrange.reset": "Zurücksetzen",
   "settings.tutorialtracker.arrange": "Vollbild …",
-  "settings.tutorialtracker.windows": "Fenster: ziehen · Ecke unten rechts = Größe"
+  "settings.tutorialtracker.windows": "Fenster: ziehen · Ecke unten rechts = Größe",
+  "screen.tutorialtracker.tools.locked": "Ein anderes Programm hält die Datei gerade fest, meist der Virenscanner, der den neuen Download prüft. Warte ein paar Sekunden und klicke noch einmal auf den Knopf."
 }

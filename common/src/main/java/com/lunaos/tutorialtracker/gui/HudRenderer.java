@@ -2,8 +2,6 @@ package com.lunaos.tutorialtracker.gui;
 
 import com.lunaos.tutorialtracker.TrackerConfig;
 import com.lunaos.tutorialtracker.TutorialTracker;
-import com.lunaos.tutorialtracker.inventory.ContainerTracker;
-import com.lunaos.tutorialtracker.materials.ItemNameIndex;
 import com.lunaos.tutorialtracker.project.Project;
 import com.lunaos.tutorialtracker.video.VideoPlayer;
 import net.minecraft.client.DeltaTracker;
@@ -11,9 +9,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 
 /** The material list and the video windows (see {@link Popups}) drawn over the game while building. */
 public final class HudRenderer {
@@ -46,28 +41,18 @@ public final class HudRenderer {
     }
 
     /** One material: small icon, "have/needed", name. Green when there is enough. */
-    static void drawRow(GuiGraphicsExtractor graphics, Font font, Project.Material material, int x, int y, int width) {
-        Item item = ItemNameIndex.item(material.item);
-        int have = ContainerTracker.have(material.item);
-        // In the main menu (the settings opened from the mod list) items have no components yet, so no stack can be
-        // made: the row goes without its icon and takes the name from the language file.
-        boolean stacks = item != null && item.builtInRegistryHolder().areComponentsBound();
-        if (stacks) {
-            ItemStack stack = new ItemStack(item);
+    static void drawRow(GuiGraphicsExtractor graphics, Font font, ListView.Row row, int x, int y, int width) {
+        if (row.icon != null) {
             graphics.pose().pushMatrix();
             graphics.pose().translate(x, y);
             graphics.pose().scale(0.625f, 0.625f);
-            graphics.item(stack, 0, 0);
+            graphics.item(row.icon, 0, 0);
             graphics.pose().popMatrix();
         }
-        int color = McStyle.amountColor(have, material.needed);
-        String amount = format(have) + "/" + format(material.needed);
         int textX = x + 13;
-        graphics.text(font, amount, textX, y + 1, color, true);
-        int nameX = textX + font.width(amount) + 4;
-        String name = stacks ? new ItemStack(item).getHoverName().getString()
-            : item != null ? Component.translatable(item.getDescriptionId()).getString() : material.item;
-        graphics.text(font, ellipsize(font, name, x + width - nameX), nameX, y + 1, McStyle.WHITE, true);
+        graphics.text(font, row.amount, textX, y + 1, row.color, true);
+        int nameX = textX + font.width(row.amount) + 4;
+        graphics.text(font, row.fittedName(font, x + width - nameX), nameX, y + 1, McStyle.WHITE, true);
     }
 
     static String format(int count) {

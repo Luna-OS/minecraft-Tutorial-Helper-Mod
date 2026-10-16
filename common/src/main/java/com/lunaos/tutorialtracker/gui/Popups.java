@@ -2,10 +2,8 @@ package com.lunaos.tutorialtracker.gui;
 
 import com.lunaos.tutorialtracker.TrackerConfig;
 import com.lunaos.tutorialtracker.TutorialTracker;
-import com.lunaos.tutorialtracker.inventory.ContainerTracker;
 import com.lunaos.tutorialtracker.project.Project;
 import com.lunaos.tutorialtracker.video.VideoPlayer;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -55,7 +53,7 @@ public final class Popups {
         int width = Math.clamp(config.listWidth, MIN_LIST_WIDTH, Math.max(MIN_LIST_WIDTH, screenWidth - 2 * MARGIN));
         int rows = config.hudRows;
         if (!edit && project != null) {
-            int content = visibleMaterials(project, config).size();
+            int content = ListView.of(project).rows.size();
             // One more line for "... and N more" when not all fit.
             rows = content > config.hudRows ? config.hudRows + 1 : Math.max(1, content);
         }
@@ -81,19 +79,6 @@ public final class Popups {
         int maxX = Math.max(MARGIN, screenWidth - width - MARGIN);
         int maxY = Math.max(MARGIN, screenHeight - height - MARGIN);
         return new Rect(Math.clamp(x, MARGIN, maxX), Math.clamp(y, MARGIN, maxY), width, height);
-    }
-
-    /** Open materials first, then (unless hidden) the ones there is enough of. */
-    static List<Project.Material> visibleMaterials(Project project, TrackerConfig config) {
-        List<Project.Material> open = new ArrayList<>();
-        List<Project.Material> done = new ArrayList<>();
-        for (Project.Material material : project.materials) {
-            (ContainerTracker.have(material.item) >= material.needed ? done : open).add(material);
-        }
-        if (!config.hideDone) {
-            open.addAll(done);
-        }
-        return open;
     }
 
     // --- Drawing ------------------------------------------------------------------------------------------------
@@ -150,19 +135,12 @@ public final class Popups {
      */
     public static void drawList(GuiGraphicsExtractor graphics, Font font, Project project, Rect rect, boolean edit,
                                 boolean controls, int mouseX, int mouseY) {
-        TrackerConfig config = TutorialTracker.config();
         String title = project == null || project.name.isBlank()
             ? Component.translatable("hud.tutorialtracker.materials").getString() : project.name;
-        List<Project.Material> rows = project == null ? List.of() : visibleMaterials(project, config);
-        int done = 0;
-        if (project != null) {
-            for (Project.Material material : project.materials) {
-                if (ContainerTracker.have(material.item) >= material.needed) {
-                    done++;
-                }
-            }
-        }
-        int total = project == null ? 0 : project.materials.size();
+        ListView view = ListView.of(project);
+        List<ListView.Row> rows = view.rows;
+        int done = view.done;
+        int total = view.total;
         String counter = total == 0 ? "" : done + "/" + total;
         frame(graphics, font, rect, title, McStyle.YELLOW, counter,
             total > 0 && done == total ? McStyle.GREEN : McStyle.GRAY, edit, controls ? BUTTON + 3 : 0);

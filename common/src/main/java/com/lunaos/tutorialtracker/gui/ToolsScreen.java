@@ -61,27 +61,46 @@ public class ToolsScreen extends Screen {
         graphics.textWithWordWrap(this.font, Component.translatable("screen.tutorialtracker.tools.message"), x, 28, width,
             McStyle.LABEL, false);
         super.extractRenderState(graphics, mouseX, mouseY, a);
-        int y = this.height - 150;
+        VideoTools.Progress current = this.progress;
+        Component line = null;
+        int color = McStyle.LABEL;
+        int below = 0;
+        if (current != null) {
+            if (current.error != null) {
+                line = Component.translatable("screen.tutorialtracker.tools.failed", current.error);
+                color = McStyle.DARK_RED;
+                // The whole message, wrapped, and what to do about a file another program holds.
+                below = this.font.wordWrapHeight(line, width) + (current.locked
+                    ? this.font.wordWrapHeight(Component.translatable("screen.tutorialtracker.tools.locked"), width) + 2
+                    : 0);
+            } else if (current.finished) {
+                line = Component.translatable("screen.tutorialtracker.tools.finished");
+                color = McStyle.DARK_GREEN;
+                below = 9;
+            } else {
+                line = Component.translatable("screen.tutorialtracker.tools.progress", current.stage,
+                    current.done / 1_000_000, Math.max(0, current.total) / 1_000_000);
+                below = 16;
+            }
+        }
+        // The tool lines and the message sit right above the buttons, pushed up by a longer message.
+        int y = this.height - 80 - Math.max(0, below - 26) - 3 * 12 - 4 - 26;
         y = toolLine(graphics, x, y, "yt-dlp", VideoTools.ytDlp());
         y = toolLine(graphics, x, y, "ffmpeg", VideoTools.ffmpeg());
         y = toolLine(graphics, x, y, "Deno", VideoTools.deno());
 
-        VideoTools.Progress current = this.progress;
         if (current != null) {
             y += 4;
-            Component line;
-            int color = McStyle.LABEL;
             if (current.error != null) {
-                line = Component.translatable("screen.tutorialtracker.tools.failed", current.error);
-                color = McStyle.DARK_RED;
-            } else if (current.finished) {
-                line = Component.translatable("screen.tutorialtracker.tools.finished");
-                color = McStyle.DARK_GREEN;
+                graphics.textWithWordWrap(this.font, line, x, y, width, color, false);
+                if (current.locked) {
+                    graphics.textWithWordWrap(this.font, Component.translatable("screen.tutorialtracker.tools.locked"),
+                        x, y + this.font.wordWrapHeight(line, width) + 2, width, McStyle.LABEL, false);
+                }
             } else {
-                line = Component.translatable("screen.tutorialtracker.tools.progress", current.stage,
-                    current.done / 1_000_000, Math.max(0, current.total) / 1_000_000);
+                McStyle.label(graphics, this.font, HudRenderer.ellipsize(this.font, line.getString(), width), x, y,
+                    color);
             }
-            McStyle.label(graphics, this.font, HudRenderer.ellipsize(this.font, line.getString(), width), x, y, color);
             if (!current.finished) {
                 McStyle.xpBar(graphics, x, y + 11, width, current.fraction());
             }

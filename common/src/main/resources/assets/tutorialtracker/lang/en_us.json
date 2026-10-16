@@ -98,5 +98,6 @@
   "screen.tutorialtracker.arrange.video": "Video: %s",
   "screen.tutorialtracker.arrange.reset": "Reset",
   "settings.tutorialtracker.arrange": "Full screen …",
-  "settings.tutorialtracker.windows": "Windows: drag · bottom right corner = size"
+  "settings.tutorialtracker.windows": "Windows: drag · bottom right corner = size",
+  "screen.tutorialtracker.tools.locked": "Another program is holding the file, usually the virus scanner checking the new download. Wait a few seconds and click the button again."
 }

@@ -552,14 +552,15 @@ public final class VideoPlayer {
                 command.add("-ss");
                 command.add(String.format(java.util.Locale.ROOT, "%.3f", this.start));
             }
-            command.add("-i");
-            command.add(url);
+            // Two decoding threads are plenty for these sizes; ffmpeg would otherwise take one per core and compete
+            // with the game's own threads for them.
+            command.addAll(List.of("-threads", "2", "-i", url));
             return command;
         }
 
         private List<String> videoCommand() {
             List<String> command = input(this.stream.videoUrl);
-            command.addAll(List.of("-an", "-sn", "-vf",
+            command.addAll(List.of("-an", "-sn", "-filter_threads", "1", "-vf",
                 "scale=" + this.width + ":" + this.height + ":flags=bilinear,fps=" + FPS,
                 "-pix_fmt", "rgba", "-f", "rawvideo", "pipe:1"));
             return command;
