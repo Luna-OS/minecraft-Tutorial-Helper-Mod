@@ -7,6 +7,7 @@ import com.lunaos.tutorialtracker.gui.VideoScreen;
 import com.lunaos.tutorialtracker.inventory.ContainerTracker;
 import com.lunaos.tutorialtracker.materials.ItemNameIndex;
 import com.lunaos.tutorialtracker.materials.MaterialParser;
+import com.lunaos.tutorialtracker.project.ArchiveStore;
 import com.lunaos.tutorialtracker.project.Project;
 import com.lunaos.tutorialtracker.project.ProjectStore;
 import com.lunaos.tutorialtracker.project.Versions;
@@ -35,6 +36,7 @@ public final class TutorialTracker {
     private static Path dataDir;
     private static TrackerConfig config;
     private static ProjectStore store;
+    private static ArchiveStore archive;
     private static boolean dirty;
     private static long lastSave;
     private static long lastPositionSave;
@@ -52,6 +54,9 @@ public final class TutorialTracker {
         config = TrackerConfig.load(configDir.resolve("settings.json"));
         com.lunaos.tutorialtracker.gui.McStyle.applyTheme(config.darkMode);
         store = new ProjectStore(configDir.resolve("projects"));
+        archive = new ArchiveStore(configDir.resolve("archive"));
+        // Lists from before the archive kept its own copies.
+        store.all().forEach(archive::record);
         VideoTools.init(gameDir.resolve(MOD_ID).resolve("bin"));
         Updater.init(loader, version, jar, config.autoUpdate);
         LOGGER.info("Tutorial Tracker {} loaded, {} project(s)", version, store.all().size());
@@ -68,6 +73,11 @@ public final class TutorialTracker {
 
     public static ProjectStore store() {
         return store;
+    }
+
+    /** The archive: every list ever loaded, kept when its project is deleted. */
+    public static ArchiveStore archive() {
+        return archive;
     }
 
     // --- Projects -----------------------------------------------------------------------------------------------
@@ -100,8 +110,10 @@ public final class TutorialTracker {
         return project;
     }
 
+    /** Saves a project and keeps its list in the archive up to date. */
     public static void saveProject(Project project) {
         store.save(project);
+        archive.record(project);
     }
 
     /** Something in the active project changed; saved within a couple of seconds. */
@@ -116,6 +128,8 @@ public final class TutorialTracker {
     public static void loadTutorial(Project project, String url, Consumer<String> done) {
         String normalized = TutorialFetcher.normalizeUrl(url);
         project.url = normalized;
+        // A new link is a new list: it goes into the archive even if the old one was taken out.
+        project.keepOutOfArchive = false;
         saveProject(project);
         TutorialFetcher.fetch(normalized).whenComplete((tutorial, error) -> Minecraft.getInstance().execute(() -> {
             if (error != null) {

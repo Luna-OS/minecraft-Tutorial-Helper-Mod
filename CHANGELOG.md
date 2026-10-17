@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0] – Minecraft 26.3
+
+- **Archiv mit eigenen Kopien:** Löschst du ein Projekt im Projektbereich, bleibt seine Liste im Archiv. „Öffnen“
+  legt das Projekt aus der Karte wieder an, mit Liste, Link, Version und Bild. Zugewiesene Kisten kommen nicht
+  zurück, die gehören zum gelöschten Projekt.
+- „Aus Archiv löschen“ entfernt nur die Karte, ein Projekt dazu bleibt bestehen.
+- Ein eingefügter Code landet als Karte im Archiv. Erst „Öffnen“ macht daraus ein Projekt.
+- Karten zeigen „● aktiv“ für das offene Projekt und „● Projekt“, wenn es noch ein Projekt dazu gibt.
+- Vorhandene Projekte werden beim ersten Start automatisch ins Archiv übernommen.
+
 ## [1.4.1] – Minecraft 26.3
 
 - **Auto-Update unter Windows repariert:** Das Einsetzen der neuen Version beim Beenden läuft jetzt wie bei Luna
