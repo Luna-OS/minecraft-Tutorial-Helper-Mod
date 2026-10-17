@@ -16,8 +16,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -25,6 +28,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * The programs the video player runs: yt-dlp (finds the video's stream), ffmpeg (decodes it) and Deno (yt-dlp needs a
@@ -69,8 +75,14 @@ public final class VideoTools {
         .connectTimeout(Duration.ofSeconds(20))
         .build();
 
+    /** Where the system keeps its list of trusted certificates, as one file. */
+    private static final List<String> CERTIFICATE_FILES = List.of("/etc/ssl/cert.pem",
+        "/etc/ssl/certs/ca-certificates.crt", "/etc/pki/tls/certs/ca-bundle.crt", "/etc/ssl/ca-bundle.pem");
+
     private static Path binDir;
     private static volatile Progress running;
+    /** The certificate file handed to the programs, worked out once; empty when there is none. */
+    private static String certificates;
 
     private VideoTools() {
     }
@@ -346,7 +358,58 @@ public final class VideoTools {
         String key = builder.environment().keySet().stream().filter(k -> k.equalsIgnoreCase("PATH")).findFirst()
             .orElse("PATH");
         builder.environment().put(key, String.join(java.io.File.pathSeparator, entries));
+        // ffmpeg checks the certificate of every HTTPS link, but a downloaded build looks for the trusted ones where it
+        // was built (the macOS one under /Volumes/ffmpeg_arm64/...), finds none there and fails every video with
+        // "Input/output error". Point it at the system's list instead.
+        if (System.getenv("SSL_CERT_FILE") == null) {
+            String file = certificates();
+            if (!file.isEmpty()) {
+                builder.environment().put("SSL_CERT_FILE", file);
+            }
+        }
         return builder;
+    }
+
+    /** The system's certificate file, or else (on Windows) a copy of the certificates Java trusts. */
+    private static synchronized String certificates() {
+        if (certificates == null) {
+            certificates = "";
+            for (String candidate : CERTIFICATE_FILES) {
+                if (Files.isRegularFile(Path.of(candidate))) {
+                    certificates = candidate;
+                    break;
+                }
+            }
+            if (certificates.isEmpty() && binDir != null) {
+                try {
+                    certificates = writeJavaCertificates(binDir.resolve("cacert.pem")).toString();
+                } catch (Exception e) {
+                    TutorialTracker.LOGGER.warn("Could not write the trusted certificates for ffmpeg", e);
+                }
+            }
+        }
+        return certificates;
+    }
+
+    private static Path writeJavaCertificates(Path target) throws Exception {
+        TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        factory.init((KeyStore) null);
+        Base64.Encoder encoder = Base64.getMimeEncoder(64, new byte[] {'\n'});
+        StringBuilder pem = new StringBuilder();
+        for (TrustManager manager : factory.getTrustManagers()) {
+            if (manager instanceof X509TrustManager trust) {
+                for (X509Certificate certificate : trust.getAcceptedIssuers()) {
+                    pem.append("-----BEGIN CERTIFICATE-----\n").append(encoder.encodeToString(certificate.getEncoded()))
+                        .append("\n-----END CERTIFICATE-----\n");
+                }
+            }
+        }
+        if (pem.isEmpty()) {
+            throw new IOException("Java trusts no certificates");
+        }
+        Files.createDirectories(target.getParent());
+        Files.writeString(target, pem, StandardCharsets.US_ASCII);
+        return target;
     }
 
     /**

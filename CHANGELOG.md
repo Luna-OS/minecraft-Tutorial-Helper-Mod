@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.2] – Minecraft 26.3
+
+- **Fixed videos not playing on macOS** ("Error opening input files: Input/output error"): Newer ffmpeg builds check
+  the certificate of every HTTPS connection, and the build the mod downloads for macOS looked for the trusted
+  certificates in a folder that only exists on the machine it was built on. The mod now points ffmpeg at the
+  system's certificate list (on Windows, at a copy of the certificates Java trusts).
+
 ## [1.5.1] – Minecraft 26.3
 
 - **Fixed the game crashing when opening the archive:** Large preview pictures (Twitch delivers 2560×1440) crashed
