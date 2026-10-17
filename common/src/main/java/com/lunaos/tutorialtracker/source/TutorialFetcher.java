@@ -21,7 +21,8 @@ import java.util.regex.Pattern;
  */
 public final class TutorialFetcher {
 
-    public record Tutorial(String title, String text, String videoId) {
+    /** {@code thumbnail}: the preview picture's address, empty when there is none. */
+    public record Tutorial(String title, String text, String videoId, String thumbnail) {
     }
 
     /** The error message when YouTube answers with its bot check instead of the page. */
@@ -89,7 +90,7 @@ public final class TutorialFetcher {
                 String title = string(details, "title");
                 String description = string(details, "shortDescription");
                 if (!description.isEmpty() || !title.isEmpty()) {
-                    return new Tutorial(title, description, videoId);
+                    return new Tutorial(title, description, videoId, youtubeThumbnail(videoId));
                 }
             }
         } catch (IOException e) {
@@ -99,7 +100,8 @@ public final class TutorialFetcher {
         if (VideoTools.ytDlp() != null) {
             JsonObject info = VideoTools.describe(url);
             if (info != null) {
-                return new Tutorial(string(info, "title"), string(info, "description"), videoId);
+                return new Tutorial(string(info, "title"), string(info, "description"), videoId,
+                    youtubeThumbnail(videoId));
             }
         }
         if (failure != null && !BLOCKED.equals(failure.getMessage())) {
@@ -125,7 +127,7 @@ public final class TutorialFetcher {
                 if (title.isEmpty()) {
                     title = string(info, "uploader");
                 }
-                return new Tutorial(title, string(info, "description"), null);
+                return new Tutorial(title, string(info, "description"), null, string(info, "thumbnail"));
             }
         }
         return fetchPage(url);
@@ -137,14 +139,31 @@ public final class TutorialFetcher {
             // Not a page (a video file, say): nothing to read a list from, but it can still be played.
             String path = URI.create(url).getPath();
             String name = path == null ? url : path.substring(path.lastIndexOf('/') + 1);
-            return new Tutorial(name, "", null);
+            return new Tutorial(name, "", null, "");
         }
         String title = "";
         Matcher titleMatch = Pattern.compile("(?is)<title[^>]*>(.*?)</title>").matcher(html);
         if (titleMatch.find()) {
             title = decodeEntities(titleMatch.group(1)).strip();
         }
-        return new Tutorial(title, htmlToText(html), null);
+        // The picture a page shows when it is shared (og:image), whichever order its attributes come in.
+        String thumbnail = "";
+        Matcher image = Pattern.compile("(?is)<meta[^>]+property=[\"']og:image[\"'][^>]*content=[\"']([^\"']+)"
+            + "|<meta[^>]+content=[\"']([^\"']+)[\"'][^>]*property=[\"']og:image[\"']").matcher(html);
+        if (image.find()) {
+            thumbnail = decodeEntities(image.group(1) != null ? image.group(1) : image.group(2)).strip();
+            try {
+                thumbnail = URI.create(url).resolve(thumbnail).toString();
+            } catch (IllegalArgumentException e) {
+                thumbnail = "";
+            }
+        }
+        return new Tutorial(title, htmlToText(html), null, thumbnail);
+    }
+
+    /** YouTube's medium preview picture, 320 by 180 pixels: small, and the same shape as the archive's cards. */
+    public static String youtubeThumbnail(String videoId) {
+        return videoId == null ? "" : "https://i.ytimg.com/vi/" + videoId + "/mqdefault.jpg";
     }
 
     /** Pages larger than this are cut off: a material list is never that far down. */

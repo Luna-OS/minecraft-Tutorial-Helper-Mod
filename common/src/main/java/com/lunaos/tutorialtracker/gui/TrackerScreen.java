@@ -180,7 +180,7 @@ public class TrackerScreen extends Screen {
         this.addRenderableWidget(Button.builder(Component.literal("▶"), b -> switchProject(1))
             .bounds(left + 22, rowTwo, 20, 20)
             .tooltip(Tooltip.create(Component.translatable("screen.tutorialtracker.next_project"))).build());
-        int fifth = (innerWidth - 44 - 4) / 3;
+        int fifth = (innerWidth - 44 - 6) / 4;
         int x = left + 44;
         this.addRenderableWidget(Button.builder(Component.translatable("screen.tutorialtracker.new_project"), b -> {
             Project created = TutorialTracker.store().create();
@@ -191,6 +191,11 @@ public class TrackerScreen extends Screen {
             this.setStatus(Component.translatable("screen.tutorialtracker.status.new"), McStyle.LABEL);
             this.rebuildWidgets();
         }).bounds(x, rowTwo, fifth, 20).build());
+        this.addRenderableWidget(Button.builder(Component.translatable("screen.tutorialtracker.archive"),
+                b -> this.minecraft.gui.setScreen(new ArchiveScreen(this)))
+            .tooltip(Tooltip.create(Component.translatable("screen.tutorialtracker.archive.tooltip")))
+            .bounds(x + fifth + 2, rowTwo, fifth, 20).build());
+        x += fifth + 2;
         this.addRenderableWidget(Button.builder(Component.translatable("screen.tutorialtracker.delete_project"), b -> {
             if (this.project == null) {
                 return;
