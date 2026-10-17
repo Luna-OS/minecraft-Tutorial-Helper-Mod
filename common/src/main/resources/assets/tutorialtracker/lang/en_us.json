@@ -104,12 +104,12 @@
   "settings.tutorialtracker.theme.light": "Light",
   "settings.tutorialtracker.theme.dark": "Dark",
   "settings.tutorialtracker.auto_update": "Auto update: %s",
-  "settings.tutorialtracker.update.ready": "Version %s installs on the next start",
+  "settings.tutorialtracker.update.ready": "Update %s installs when the game closes",
   "settings.tutorialtracker.update.downloading": "Downloading version %s …",
   "settings.tutorialtracker.update.checking": "Checking for updates …",
-  "settings.tutorialtracker.update.current": "Up to date",
-  "settings.tutorialtracker.update.failed": "Update check failed",
-  "message.tutorialtracker.update_ready": "Tutorial Tracker %s is downloaded and installs on the next start.",
+  "settings.tutorialtracker.update.current": "Up to date (version %s)",
+  "settings.tutorialtracker.update.failed": "Update check failed: %s",
+  "message.tutorialtracker.update_ready": "Tutorial Tracker %s is downloaded and installs when Minecraft closes.",
   "key.tutorialtracker.archive": "Open archive",
   "screen.tutorialtracker.archive": "Archive",
   "screen.tutorialtracker.archive.tooltip": "All projects with picture, version and list: open again, rename, delete or share as a code with friends",
@@ -129,5 +129,7 @@
   "screen.tutorialtracker.archive.imported": "Imported \"%s\"",
   "screen.tutorialtracker.archive.no_code": "No Tutorial Tracker code in the clipboard",
   "screen.tutorialtracker.archive.active": "active",
-  "screen.tutorialtracker.archive.deleted": "Deleted \"%s\""
+  "screen.tutorialtracker.archive.deleted": "Deleted \"%s\"",
+  "settings.tutorialtracker.update.retry": "Update %s could not be put in, trying again when the game closes",
+  "settings.tutorialtracker.update.version": "Version %s"
 }

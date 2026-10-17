@@ -16,7 +16,6 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.HexFormat;
-import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -67,6 +66,8 @@ public final class Updater {
     private static Path pending;
     private static Path target;
     private static boolean swapHooked;
+    /** The last close could not put the update in (the old jar stayed locked). */
+    private static volatile String lastFailure;
     private static boolean announced;
 
     private Updater() {
@@ -84,6 +85,15 @@ public final class Updater {
         return error;
     }
 
+    public static String version() {
+        return version == null ? "?" : version;
+    }
+
+    /** Set when the last close could not put an update in. */
+    public static String lastFailure() {
+        return lastFailure;
+    }
+
     /**
      * Called by each loader at start with its name ("fabric", "neoforge", "forge"), the mod's version and the jar
      * the mod was loaded from (null when it is not known).
@@ -92,11 +102,15 @@ public final class Updater {
         loader = loaderName;
         version = modVersion;
         minecraft = SharedConstants.getCurrentVersion().name();
+        readLastResult();
+        TutorialTracker.LOGGER.info("Tutorial Tracker updater: {} {} for Minecraft {}, jar {}", loaderName, modVersion,
+            minecraft, jar);
         if (jar == null || !Files.isRegularFile(jar) || !jar.getFileName().toString().endsWith(".jar")) {
             state = State.OFF;
+            TutorialTracker.LOGGER.info("Tutorial Tracker updater off: not running from a jar");
             return;
         }
-        ownJar = jar;
+        ownJar = jar.toAbsolutePath();
         findEarlierDownload();
         if (state != State.READY && check) {
             check();
@@ -167,6 +181,7 @@ public final class Updater {
         }
         if (best == null) {
             state = State.UP_TO_DATE;
+            TutorialTracker.LOGGER.info("Tutorial Tracker {} is up to date", version);
             return;
         }
         String jarName = "tutorial-tracker-" + loader + "-" + bestVersion + "+" + minecraft + ".jar";
@@ -240,7 +255,8 @@ public final class Updater {
     /**
      * When the game closes: the old jar out, the new one in. The old jar always goes first, and the new one only goes
      * in once it is gone: two copies of the mod would keep the game from starting. On Windows the running jar stays
-     * locked until the game has fully ended, so a small PowerShell script waits for that and does the same.
+     * locked until the game has fully ended, so a small batch script, started on its own with "start", waits for
+     * that and does the same (as Luna Map does). How it went is written to a file read at the next start.
      */
     private static void swap() {
         if (pending == null || !Files.exists(pending)) {
@@ -252,6 +268,7 @@ public final class Updater {
             } else {
                 Files.deleteIfExists(ownJar);
                 Files.move(pending, target, StandardCopyOption.REPLACE_EXISTING);
+                Files.writeString(resultFile(), "installed " + newVersion);
             }
         } catch (Exception e) {
             // Left as it is: the pending jar is tried again at the next close.
@@ -260,34 +277,63 @@ public final class Updater {
     }
 
     /**
-     * The script is started through WMI rather than as a child of the game: some launchers end every process the
-     * game started when it closes, which would end the script before it did anything. This waits until WMI has the
-     * script running, a second or two.
+     * Tries to delete the old jar every two seconds for up to three minutes (the game, the launcher or a virus
+     * scanner may still hold it), and only then moves the new one in.
      */
-    private static void swapOnWindows() throws IOException, InterruptedException {
-        String script = "Wait-Process -Id " + ProcessHandle.current().pid() + " -ErrorAction SilentlyContinue;"
-            + " for ($i = 0; $i -lt 40 -and (Test-Path -LiteralPath " + quote(ownJar) + "); $i++) {"
-            + " Remove-Item -LiteralPath " + quote(ownJar) + " -Force -ErrorAction SilentlyContinue;"
-            + " Start-Sleep -Milliseconds 500 };"
-            + " if (-not (Test-Path -LiteralPath " + quote(ownJar) + ")) {"
-            + " Move-Item -LiteralPath " + quote(pending) + " -Destination " + quote(target) + " -Force }";
-        String encoded = java.util.Base64.getEncoder()
-            .encodeToString(script.getBytes(java.nio.charset.StandardCharsets.UTF_16LE));
-        String detached = "powershell -NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand " + encoded;
-        String launcher = "Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{CommandLine='"
-            + detached + "'} | Out-Null";
-        Process process = new ProcessBuilder(List.of("powershell", "-NoProfile", "-NonInteractive", "-WindowStyle",
-            "Hidden", "-Command", launcher)).redirectErrorStream(true).start();
-        process.getOutputStream().close();
-        if (!process.waitFor(20, java.util.concurrent.TimeUnit.SECONDS) || process.exitValue() != 0) {
-            // No WMI: start the script directly and hope the launcher lets it live.
-            new ProcessBuilder(List.of("powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden",
-                "-EncodedCommand", encoded)).start();
-        }
+    private static void swapOnWindows() throws IOException {
+        Path script = Files.createTempFile("tutorialtracker-update", ".bat");
+        String oldJar = bat(ownJar);
+        String result = bat(resultFile());
+        String text = "@echo off\r\n"
+            + "chcp 65001 >nul\r\n"
+            + "set /a n=0\r\n"
+            + ":loop\r\n"
+            + "ping -n 3 127.0.0.1 >nul\r\n"
+            + "del /f /q \"" + oldJar + "\" >nul 2>&1\r\n"
+            + "set /a n+=1\r\n"
+            + "if exist \"" + oldJar + "\" if %n% lss 90 goto loop\r\n"
+            + "if exist \"" + oldJar + "\" (\r\n"
+            + "  >\"" + result + "\" echo locked\r\n"
+            + ") else (\r\n"
+            + "  move /y \"" + bat(pending) + "\" \"" + bat(target) + "\" >nul\r\n"
+            + "  >\"" + result + "\" echo installed " + newVersion + "\r\n"
+            + ")\r\n"
+            + "del \"%~f0\"\r\n";
+        Files.writeString(script, text, java.nio.charset.StandardCharsets.UTF_8);
+        new ProcessBuilder("cmd", "/c", "start", "\"\"", "/min", script.toString())
+            .redirectErrorStream(true).redirectOutput(ProcessBuilder.Redirect.DISCARD).start();
     }
 
-    private static String quote(Path path) {
-        return "'" + path.toAbsolutePath().toString().replace("'", "''") + "'";
+    /** A path for a batch file: absolute, with % doubled so cmd leaves it alone. */
+    private static String bat(Path path) {
+        return path.toAbsolutePath().toString().replace("%", "%%");
+    }
+
+    /** Where the last close says how installing went. */
+    private static Path resultFile() throws IOException {
+        Path folder = TutorialTracker.dataDir();
+        Files.createDirectories(folder);
+        return folder.resolve("update-result.txt");
+    }
+
+    /** What the last close reported, logged and kept for the settings. */
+    private static void readLastResult() {
+        try {
+            Path file = resultFile();
+            if (!Files.exists(file)) {
+                return;
+            }
+            String text = Files.readString(file).strip();
+            Files.deleteIfExists(file);
+            if (text.startsWith("installed")) {
+                TutorialTracker.LOGGER.info("Tutorial Tracker update {} was installed", text.substring(9).strip());
+            } else {
+                lastFailure = text;
+                TutorialTracker.LOGGER.warn("Tutorial Tracker update could not be installed: {}", text);
+            }
+        } catch (IOException e) {
+            TutorialTracker.LOGGER.warn("Could not read the last update result", e);
+        }
     }
 
     /** Once in a world: says that an update is ready, so nobody wonders about the new version later. */
