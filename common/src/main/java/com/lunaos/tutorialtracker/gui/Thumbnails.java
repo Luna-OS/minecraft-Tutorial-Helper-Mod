@@ -54,6 +54,8 @@ final class Thumbnails {
 
     /** Pictures bigger than this are not previews. */
     private static final int MAX_BYTES = 4 << 20;
+    /** 2560 by 1440 at most; Twitch is asked for far smaller ones anyway. */
+    private static final long MAX_PIXELS = 2560L * 1440;
     private static final Map<String, Entry> LOADED = new ConcurrentHashMap<>();
     private static final ExecutorService LOADER = Executors.newFixedThreadPool(2, runnable -> {
         Thread thread = new Thread(runnable, "TutorialTracker thumbnails");
@@ -72,7 +74,9 @@ final class Thumbnails {
     /** The picture's address: the list's own, or for a YouTube link the one YouTube always has. */
     static String address(String thumbnail, String url) {
         if (!thumbnail.isBlank()) {
-            return thumbnail;
+            // Twitch hands out its pictures at full size ("0x0") or as a template; a card needs 640 by 360.
+            return thumbnail.replace("{width}x{height}", "640x360").replace("%{width}x%{height}", "640x360")
+                .replaceFirst("-0x0\\.(jpg|png)$", "-640x360.$1");
         }
         return TutorialFetcher.youtubeThumbnail(TutorialFetcher.youtubeId(url));
     }
@@ -147,40 +151,46 @@ final class Thumbnails {
         return bytes;
     }
 
-    /** Decodes on this thread; the texture is made on the game's. */
+    /**
+     * Decodes on the game's thread, the way the game reads its own pictures, and makes the texture there. Decoding
+     * the large JPEGs Twitch sends on a thread of our own crashed the game inside the native memory allocator.
+     * Pictures larger than a preview needs are skipped after a look at their size, which costs nothing.
+     */
     private static void decode(String address, byte[] bytes, Entry entry) {
-        ByteBuffer input = MemoryUtil.memAlloc(bytes.length);
-        ByteBuffer pixels;
-        int width;
-        int height;
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            input.put(bytes).flip();
-            IntBuffer w = stack.mallocInt(1);
-            IntBuffer h = stack.mallocInt(1);
-            IntBuffer channels = stack.mallocInt(1);
-            pixels = STBImage.stbi_load_from_memory(input, w, h, channels, 4);
-            width = w.get(0);
-            height = h.get(0);
-        } finally {
-            MemoryUtil.memFree(input);
-        }
-        if (pixels == null) {
-            // A format stb does not read (WebP, say): the card stays without a picture.
-            return;
-        }
-        byte[] rgba = new byte[width * height * 4];
-        pixels.get(rgba);
-        STBImage.stbi_image_free(pixels);
         Minecraft.getInstance().execute(() -> {
-            Identifier id = Identifier.fromNamespaceAndPath(TutorialTracker.MOD_ID, "thumb/" + hash(address));
-            Texture texture = new Texture("tutorialtracker thumbnail", width, height);
-            ByteBuffer target = MemoryUtil.memByteBuffer(texture.getPixels().getPointer(), rgba.length);
-            target.put(0, rgba);
-            texture.upload();
-            Minecraft.getInstance().getTextureManager().register(id, texture);
-            entry.width = width;
-            entry.height = height;
-            entry.texture = id;
+            ByteBuffer input = MemoryUtil.memAlloc(bytes.length);
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                input.put(bytes).flip();
+                IntBuffer w = stack.mallocInt(1);
+                IntBuffer h = stack.mallocInt(1);
+                IntBuffer channels = stack.mallocInt(1);
+                if (!STBImage.stbi_info_from_memory(input, w, h, channels)
+                    || (long) w.get(0) * h.get(0) > MAX_PIXELS) {
+                    // Not a picture stb reads (WebP, say), or far larger than a card: no picture.
+                    return;
+                }
+                ByteBuffer pixels = STBImage.stbi_load_from_memory(input, w, h, channels, 4);
+                if (pixels == null) {
+                    return;
+                }
+                int width = w.get(0);
+                int height = h.get(0);
+                try {
+                    Identifier id = Identifier.fromNamespaceAndPath(TutorialTracker.MOD_ID, "thumb/" + hash(address));
+                    Texture texture = new Texture("tutorialtracker thumbnail", width, height);
+                    MemoryUtil.memCopy(MemoryUtil.memAddress(pixels), texture.getPixels().getPointer(),
+                        (long) width * height * 4);
+                    texture.upload();
+                    Minecraft.getInstance().getTextureManager().register(id, texture);
+                    entry.width = width;
+                    entry.height = height;
+                    entry.texture = id;
+                } finally {
+                    STBImage.stbi_image_free(pixels);
+                }
+            } finally {
+                MemoryUtil.memFree(input);
+            }
         });
     }
 
