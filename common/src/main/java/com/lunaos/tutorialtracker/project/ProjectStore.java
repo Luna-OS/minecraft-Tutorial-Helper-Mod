@@ -51,6 +51,18 @@ public final class ProjectStore {
 
     /** Fields an older or hand-edited file may lack. */
     private static void sanitize(Project project) {
+        if (project.name == null) {
+            project.name = "";
+        }
+        if (project.url == null) {
+            project.url = "";
+        }
+        if (project.version == null) {
+            project.version = "";
+        }
+        if (project.thumbnail == null) {
+            project.thumbnail = "";
+        }
         if (project.materials == null) {
             project.materials = new ArrayList<>();
         }

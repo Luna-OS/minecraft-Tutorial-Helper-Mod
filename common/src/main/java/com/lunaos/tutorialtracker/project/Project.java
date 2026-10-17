@@ -11,6 +11,10 @@ public final class Project {
     public String id;
     public String name = "";
     public String url = "";
+    /** The Minecraft version the build is for, as the tutorial gives it ("1.21.4"); empty when unknown. */
+    public String version = "";
+    /** The video's preview picture, shown in the archive. */
+    public String thumbnail = "";
     public long created;
     /** Where the video was left, so it carries on from there. */
     public double videoPosition;

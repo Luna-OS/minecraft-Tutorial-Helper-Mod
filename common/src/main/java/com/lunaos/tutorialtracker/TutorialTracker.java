@@ -1,5 +1,6 @@
 package com.lunaos.tutorialtracker;
 
+import com.lunaos.tutorialtracker.gui.ArchiveScreen;
 import com.lunaos.tutorialtracker.gui.ContainerButton;
 import com.lunaos.tutorialtracker.gui.TrackerScreen;
 import com.lunaos.tutorialtracker.gui.VideoScreen;
@@ -8,6 +9,7 @@ import com.lunaos.tutorialtracker.materials.ItemNameIndex;
 import com.lunaos.tutorialtracker.materials.MaterialParser;
 import com.lunaos.tutorialtracker.project.Project;
 import com.lunaos.tutorialtracker.project.ProjectStore;
+import com.lunaos.tutorialtracker.project.Versions;
 import com.lunaos.tutorialtracker.source.TutorialFetcher;
 import com.lunaos.tutorialtracker.video.VideoPlayer;
 import com.lunaos.tutorialtracker.video.VideoTools;
@@ -30,6 +32,7 @@ public final class TutorialTracker {
     public static final String MOD_ID = "tutorialtracker";
     public static final Logger LOGGER = LogUtils.getLogger();
 
+    private static Path dataDir;
     private static TrackerConfig config;
     private static ProjectStore store;
     private static boolean dirty;
@@ -45,12 +48,18 @@ public final class TutorialTracker {
      */
     public static void init(Path gameDir, String loader, String version, Path jar) {
         Path configDir = gameDir.resolve("config").resolve(MOD_ID);
+        dataDir = gameDir.resolve(MOD_ID);
         config = TrackerConfig.load(configDir.resolve("settings.json"));
         com.lunaos.tutorialtracker.gui.McStyle.applyTheme(config.darkMode);
         store = new ProjectStore(configDir.resolve("projects"));
         VideoTools.init(gameDir.resolve(MOD_ID).resolve("bin"));
         Updater.init(loader, version, jar, config.autoUpdate);
         LOGGER.info("Tutorial Tracker {} loaded, {} project(s)", version, store.all().size());
+    }
+
+    /** The mod's own folder in the game folder, for downloaded programs and cached pictures. */
+    public static Path dataDir() {
+        return dataDir;
     }
 
     public static TrackerConfig config() {
@@ -117,6 +126,13 @@ public final class TutorialTracker {
             if (!tutorial.title().isBlank()) {
                 project.name = tutorial.title();
             }
+            if (!tutorial.thumbnail().isBlank()) {
+                project.thumbnail = tutorial.thumbnail();
+            }
+            String version = Versions.guess(tutorial.title(), tutorial.text());
+            if (!version.isEmpty() || project.version.isBlank()) {
+                project.version = version;
+            }
             MaterialParser.Result result = new MaterialParser(ItemNameIndex.get()).parse(tutorial.text());
             // Loading the same link again refreshes the list, but a page without one leaves it as it was.
             if (!result.items().isEmpty() || project.materials.isEmpty()) {
@@ -177,6 +193,9 @@ public final class TutorialTracker {
         }
         while (TrackerKeys.OPEN.consumeClick()) {
             minecraft.gui.setScreen(new TrackerScreen(null));
+        }
+        while (TrackerKeys.ARCHIVE.consumeClick()) {
+            minecraft.gui.setScreen(new ArchiveScreen(null));
         }
         while (TrackerKeys.ARRANGE.consumeClick()) {
             minecraft.gui.setScreen(new com.lunaos.tutorialtracker.gui.PopupEditScreen(null));

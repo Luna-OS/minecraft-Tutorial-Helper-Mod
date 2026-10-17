@@ -27,9 +27,11 @@ public final class TrackerKeys {
         new KeyMapping("key.tutorialtracker.video_screen", InputConstants.UNKNOWN.getValue(), CATEGORY);
     public static final KeyMapping TOGGLE_VIDEO =
         new KeyMapping("key.tutorialtracker.toggle_video", InputConstants.UNKNOWN.getValue(), CATEGORY);
+    public static final KeyMapping ARCHIVE =
+        new KeyMapping("key.tutorialtracker.archive", InputConstants.UNKNOWN.getValue(), CATEGORY);
 
     public static final KeyMapping[] ALL = {OPEN, TOGGLE_HUD, ASSIGN_CONTAINER, PLAY_PAUSE, ARRANGE, SEEK_BACK,
-        SEEK_FORWARD, VIDEO_SCREEN, TOGGLE_VIDEO};
+        SEEK_FORWARD, VIDEO_SCREEN, TOGGLE_VIDEO, ARCHIVE};
 
     private TrackerKeys() {
     }
