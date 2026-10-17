@@ -3,6 +3,7 @@ package com.lunaos.tutorialtracker.gui;
 import com.lunaos.tutorialtracker.TutorialTracker;
 import com.lunaos.tutorialtracker.inventory.ContainerTracker;
 import com.lunaos.tutorialtracker.materials.ItemNameIndex;
+import com.lunaos.tutorialtracker.project.ArchiveEntry;
 import com.lunaos.tutorialtracker.project.Project;
 import com.lunaos.tutorialtracker.project.ShareCode;
 import com.lunaos.tutorialtracker.source.TutorialFetcher;
@@ -21,9 +22,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Every project as a card: the video's picture, the farm's name, the Minecraft version and how many materials it has.
- * A project can be opened again, renamed, given its version, deleted, or copied as a short code to send over Discord
- * and pasted back in on the other side.
+ * Every list ever loaded, as a card: the video's picture, the farm's name, the Minecraft version and how many
+ * materials it has. The archive keeps its own copies: deleting a project leaves its card here, and opening a card
+ * makes the project again. A card can be renamed, given its version, removed from the archive, or copied as a short
+ * code to send over Discord and pasted back in on the other side.
  */
 public class ArchiveScreen extends Screen {
 
@@ -36,8 +38,8 @@ public class ArchiveScreen extends Screen {
 
     private final Screen parent;
     /** Newest first. */
-    private List<Project> projects = List.of();
-    private Project selected;
+    private List<ArchiveEntry> entries = List.of();
+    private ArchiveEntry selected;
     private int scroll;
     private Component status = Component.empty();
     private int statusColor;
@@ -59,14 +61,15 @@ public class ArchiveScreen extends Screen {
     public ArchiveScreen(Screen parent) {
         super(Component.translatable("screen.tutorialtracker.archive"));
         this.parent = parent;
-        this.selected = TutorialTracker.activeProject();
+        Project active = TutorialTracker.activeProject();
+        this.selected = active == null ? null : TutorialTracker.archive().byId(active.id);
     }
 
     @Override
     protected void init() {
-        this.projects = new ArrayList<>(TutorialTracker.store().all());
-        Collections.reverse(this.projects);
-        if (this.selected != null && !this.projects.contains(this.selected)) {
+        this.entries = new ArrayList<>(TutorialTracker.archive().all());
+        Collections.reverse(this.entries);
+        if (this.selected != null && !this.entries.contains(this.selected)) {
             this.selected = null;
         }
         this.panelWidth = Math.min(this.width - 8, 600);
@@ -91,7 +94,7 @@ public class ArchiveScreen extends Screen {
         this.gridHeight = Math.max(CARD_HEIGHT, editY - 6 - this.gridY);
         this.scroll = Math.clamp(this.scroll, 0, maxScroll());
 
-        // The selected project's name and version.
+        // The selected card's name and version.
         Component nameLabel = Component.translatable("screen.tutorialtracker.archive.name");
         Component versionLabel = Component.translatable("screen.tutorialtracker.archive.version");
         int nameX = left + this.font.width(nameLabel) + 4;
@@ -107,13 +110,13 @@ public class ArchiveScreen extends Screen {
         this.nameBox.setResponder(value -> {
             if (this.selected != null && !value.equals(this.selected.name)) {
                 this.selected.name = value;
-                TutorialTracker.saveProject(this.selected);
+                saveSelected();
             }
         });
         this.versionBox.setResponder(value -> {
-            if (this.selected != null && !value.equals(this.selected.version)) {
+            if (this.selected != null && !value.strip().equals(this.selected.version)) {
                 this.selected.version = value.strip();
-                TutorialTracker.saveProject(this.selected);
+                saveSelected();
             }
         });
         this.addRenderableWidget(this.nameBox);
@@ -149,14 +152,25 @@ public class ArchiveScreen extends Screen {
         this.deleteButton.active = any;
     }
 
-    private void select(Project project) {
-        this.selected = project;
+    /** Saves the card, and its project too while it exists, so both show the same name and version. */
+    private void saveSelected() {
+        TutorialTracker.archive().save(this.selected);
+        Project project = TutorialTracker.store().byId(this.selected.id);
+        if (project != null) {
+            project.name = this.selected.name;
+            project.version = this.selected.version;
+            TutorialTracker.saveProject(project);
+        }
+    }
+
+    private void select(ArchiveEntry entry) {
+        this.selected = entry;
         fillEditors();
         updateButtons();
     }
 
     private int rows() {
-        return (this.projects.size() + this.columns - 1) / this.columns;
+        return (this.entries.size() + this.columns - 1) / this.columns;
     }
 
     private int visibleRows() {
@@ -168,7 +182,7 @@ public class ArchiveScreen extends Screen {
     }
 
     /** The card under a point, or null. */
-    private Project cardAt(double x, double y) {
+    private ArchiveEntry cardAt(double x, double y) {
         if (x < this.gridX || y < this.gridY || y >= this.gridY + this.gridHeight) {
             return null;
         }
@@ -179,16 +193,22 @@ public class ArchiveScreen extends Screen {
             return null;
         }
         int index = (row + this.scroll) * this.columns + column;
-        return row < visibleRows() && index < this.projects.size() ? this.projects.get(index) : null;
+        return row < visibleRows() && index < this.entries.size() ? this.entries.get(index) : null;
     }
 
     // --- Actions ------------------------------------------------------------------------------------------------
 
+    /** Opens the card's project, made again from the card when it was deleted. */
     private void openSelected() {
         if (this.selected == null) {
             return;
         }
-        TutorialTracker.setActiveProject(this.selected);
+        Project project = TutorialTracker.store().byId(this.selected.id);
+        if (project == null) {
+            project = TutorialTracker.store().restore(this.selected);
+            ContainerTracker.recount();
+        }
+        TutorialTracker.setActiveProject(project);
         this.minecraft.gui.setScreen(new TrackerScreen(null));
     }
 
@@ -197,51 +217,48 @@ public class ArchiveScreen extends Screen {
             return;
         }
         String derived = TutorialFetcher.youtubeThumbnail(TutorialFetcher.youtubeId(this.selected.url));
-        String code = ShareCode.export(this.selected, derived);
+        String code = ShareCode.export(this.selected.asProject(), derived);
         this.minecraft.keyboardHandler.setClipboard(code);
         setStatus(Component.translatable("screen.tutorialtracker.archive.copied", code.length()), McStyle.DARK_GREEN);
     }
 
+    /** A shared code becomes a card; opening it makes the project. */
     private void importFromClipboard() {
         ShareCode.Shared shared = ShareCode.find(this.minecraft.keyboardHandler.getClipboard());
         if (shared == null) {
             setStatus(Component.translatable("screen.tutorialtracker.archive.no_code"), McStyle.DARK_RED);
             return;
         }
-        Project project = TutorialTracker.store().create();
-        project.name = shared.name();
-        project.url = shared.url();
-        project.version = shared.version();
-        project.thumbnail = shared.thumbnail();
-        project.setMaterials(shared.materials());
-        TutorialTracker.saveProject(project);
-        ContainerTracker.recount();
-        this.selected = project;
+        ArchiveEntry entry = TutorialTracker.archive().add(shared);
+        this.selected = entry;
         this.scroll = 0;
-        setStatus(Component.translatable("screen.tutorialtracker.archive.imported", displayName(project)),
+        setStatus(Component.translatable("screen.tutorialtracker.archive.imported", displayName(entry)),
             McStyle.DARK_GREEN);
         this.rebuildWidgets();
     }
 
+    /** Takes the card out of the archive; a project of it stays as it is. */
     private void deleteSelected() {
-        Project project = this.selected;
-        if (project == null) {
+        ArchiveEntry entry = this.selected;
+        if (entry == null) {
             return;
         }
         this.minecraft.gui.setScreen(new ConfirmScreen(yes -> {
             if (yes) {
-                boolean wasActive = project == TutorialTracker.activeProject();
-                TutorialTracker.store().delete(project);
-                if (wasActive) {
-                    TutorialTracker.setActiveProject(null);
+                TutorialTracker.archive().delete(entry);
+                Project project = TutorialTracker.store().byId(entry.id);
+                if (project != null) {
+                    // Otherwise its next save would put it straight back.
+                    project.keepOutOfArchive = true;
+                    TutorialTracker.store().save(project);
                 }
                 this.selected = null;
-                setStatus(Component.translatable("screen.tutorialtracker.archive.deleted", displayName(project)),
+                setStatus(Component.translatable("screen.tutorialtracker.archive.deleted", displayName(entry)),
                     McStyle.LABEL);
             }
             this.minecraft.gui.setScreen(this);
-        }, Component.translatable("screen.tutorialtracker.delete_project"),
-            Component.translatable("screen.tutorialtracker.delete_project.confirm", displayName(project))));
+        }, Component.translatable("screen.tutorialtracker.archive.delete"),
+            Component.translatable("screen.tutorialtracker.archive.delete.confirm", displayName(entry))));
     }
 
     private void setStatus(Component text, int color) {
@@ -249,9 +266,9 @@ public class ArchiveScreen extends Screen {
         this.statusColor = color;
     }
 
-    private static Component displayName(Project project) {
-        return project.name.isBlank() ? Component.translatable("screen.tutorialtracker.unnamed")
-            : Component.literal(project.name);
+    private static Component displayName(ArchiveEntry entry) {
+        return entry.name.isBlank() ? Component.translatable("screen.tutorialtracker.unnamed")
+            : Component.literal(entry.name);
     }
 
     // --- Input --------------------------------------------------------------------------------------------------
@@ -261,14 +278,14 @@ public class ArchiveScreen extends Screen {
         if (super.mouseClicked(event, doubleClick)) {
             return true;
         }
-        Project project = cardAt(event.x(), event.y());
-        if (project == null) {
+        ArchiveEntry entry = cardAt(event.x(), event.y());
+        if (entry == null) {
             return false;
         }
-        if (doubleClick && project == this.selected) {
+        if (doubleClick && entry == this.selected) {
             openSelected();
         } else {
-            select(project);
+            select(entry);
         }
         return true;
     }
@@ -293,7 +310,7 @@ public class ArchiveScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         int left = this.panelX + PAD;
-        Component heading = Component.translatable("screen.tutorialtracker.archive.count", this.projects.size());
+        Component heading = Component.translatable("screen.tutorialtracker.archive.count", this.entries.size());
         McStyle.label(graphics, this.font, heading, left, this.panelY + 10);
         // The last action's result, between the heading and the import button.
         int statusX = left + this.font.width(heading) + 10;
@@ -301,21 +318,23 @@ public class ArchiveScreen extends Screen {
         McStyle.label(graphics, this.font, HudRenderer.ellipsize(this.font, this.status.getString(), statusRoom),
             statusX, this.panelY + 10, this.statusColor);
 
-        if (this.projects.isEmpty()) {
+        if (this.entries.isEmpty()) {
             graphics.textWithWordWrap(this.font, Component.translatable("screen.tutorialtracker.archive.empty"), left,
                 this.gridY + 4, this.panelWidth - 2 * PAD, McStyle.LABEL, false);
         }
-        Project hovered = cardAt(mouseX, mouseY);
+        ArchiveEntry hovered = cardAt(mouseX, mouseY);
         Project active = TutorialTracker.activeProject();
         int shown = visibleRows() * this.columns;
         for (int i = 0; i < shown; i++) {
             int index = this.scroll * this.columns + i;
-            if (index >= this.projects.size()) {
+            if (index >= this.entries.size()) {
                 break;
             }
             int x = this.gridX + (i % this.columns) * (CARD_WIDTH + GAP);
             int y = this.gridY + (i / this.columns) * (CARD_HEIGHT + GAP);
-            drawCard(graphics, this.projects.get(index), x, y, this.projects.get(index) == active);
+            ArchiveEntry entry = this.entries.get(index);
+            drawCard(graphics, entry, x, y, active != null && active.id.equals(entry.id),
+                TutorialTracker.store().byId(entry.id) != null);
         }
         if (maxScroll() > 0) {
             // Where in the list the view is, as a thin bar at the right edge.
@@ -338,9 +357,13 @@ public class ArchiveScreen extends Screen {
         }
     }
 
-    /** Picture, name, then version and material count; a frame for the selected card, a dot for the open project. */
-    private void drawCard(GuiGraphicsExtractor graphics, Project project, int x, int y, boolean active) {
-        boolean isSelected = project == this.selected;
+    /**
+     * Picture, name, then version and material count; a frame for the selected card, a mark when it is the open
+     * project or still has a project.
+     */
+    private void drawCard(GuiGraphicsExtractor graphics, ArchiveEntry entry, int x, int y, boolean active,
+                          boolean hasProject) {
+        boolean isSelected = entry == this.selected;
         if (isSelected) {
             graphics.fill(x - 1, y - 1, x + CARD_WIDTH + 1, y + CARD_HEIGHT + 1, McStyle.LABEL);
         }
@@ -348,10 +371,10 @@ public class ArchiveScreen extends Screen {
         int thumbX = x + 2;
         int thumbY = y + 2;
         graphics.fill(thumbX, thumbY, thumbX + THUMB_WIDTH, thumbY + THUMB_HEIGHT, 0xFF101010);
-        if (!Thumbnails.draw(graphics, project, thumbX, thumbY, THUMB_WIDTH, THUMB_HEIGHT)) {
+        if (!Thumbnails.draw(graphics, entry.thumbnail, entry.url, thumbX, thumbY, THUMB_WIDTH, THUMB_HEIGHT)) {
             // No picture (yet): the first material's item stands in, large.
-            if (!project.materials.isEmpty()) {
-                Item item = ItemNameIndex.item(project.materials.get(0).item);
+            if (!entry.materials.isEmpty()) {
+                Item item = ItemNameIndex.item(entry.materials.get(0).item);
                 if (item != null && item.builtInRegistryHolder().areComponentsBound()) {
                     graphics.pose().pushMatrix();
                     graphics.pose().translate(thumbX + THUMB_WIDTH / 2f - 16, thumbY + THUMB_HEIGHT / 2f - 16);
@@ -361,20 +384,21 @@ public class ArchiveScreen extends Screen {
                 }
             }
         }
-        if (active) {
-            String mark = "● " + Component.translatable("screen.tutorialtracker.archive.active").getString();
+        if (active || hasProject) {
+            String mark = "● " + Component.translatable(active ? "screen.tutorialtracker.archive.active"
+                : "screen.tutorialtracker.archive.in_projects").getString();
             int markWidth = this.font.width(mark) + 4;
             graphics.fill(thumbX, thumbY, thumbX + markWidth, thumbY + 11, 0xA0000000);
-            graphics.text(this.font, mark, thumbX + 2, thumbY + 2, McStyle.GREEN, false);
+            graphics.text(this.font, mark, thumbX + 2, thumbY + 2, active ? McStyle.GREEN : McStyle.GRAY, false);
         }
-        String name = displayName(project).getString();
+        String name = displayName(entry).getString();
         graphics.text(this.font, HudRenderer.ellipsize(this.font, name, CARD_WIDTH - 4), x + 2, thumbY + THUMB_HEIGHT + 3,
             McStyle.WHITE, true);
-        String version = project.version.isBlank()
+        String version = entry.version.isBlank()
             ? Component.translatable("screen.tutorialtracker.archive.version_unknown").getString()
-            : "MC " + project.version;
+            : "MC " + entry.version;
         String info = version + " · "
-            + Component.translatable("screen.tutorialtracker.archive.items", project.materials.size()).getString();
+            + Component.translatable("screen.tutorialtracker.archive.items", entry.materials.size()).getString();
         graphics.text(this.font, HudRenderer.ellipsize(this.font, info, CARD_WIDTH - 4), x + 2,
             thumbY + THUMB_HEIGHT + 13, isSelected ? McStyle.YELLOW : McStyle.GRAY, true);
     }

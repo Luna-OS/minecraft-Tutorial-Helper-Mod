@@ -15,6 +15,8 @@ public final class Project {
     public String version = "";
     /** The video's preview picture, shown in the archive. */
     public String thumbnail = "";
+    /** Taken out of the archive by hand: its list is not copied there again. */
+    public boolean keepOutOfArchive;
     public long created;
     /** Where the video was left, so it carries on from there. */
     public double videoPosition;

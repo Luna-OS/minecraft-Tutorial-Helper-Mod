@@ -1,7 +1,6 @@
 package com.lunaos.tutorialtracker.gui;
 
 import com.lunaos.tutorialtracker.TutorialTracker;
-import com.lunaos.tutorialtracker.project.Project;
 import com.lunaos.tutorialtracker.source.TutorialFetcher;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.textures.FilterMode;
@@ -70,20 +69,21 @@ final class Thumbnails {
     private Thumbnails() {
     }
 
-    /** The picture's address: the project's own, or for a YouTube link the one YouTube always has. */
-    static String address(Project project) {
-        if (!project.thumbnail.isBlank()) {
-            return project.thumbnail;
+    /** The picture's address: the list's own, or for a YouTube link the one YouTube always has. */
+    static String address(String thumbnail, String url) {
+        if (!thumbnail.isBlank()) {
+            return thumbnail;
         }
-        return TutorialFetcher.youtubeThumbnail(TutorialFetcher.youtubeId(project.url));
+        return TutorialFetcher.youtubeThumbnail(TutorialFetcher.youtubeId(url));
     }
 
     /**
      * Draws the picture filling the box, cut to its shape rather than squeezed. Returns false while there is no
      * picture (still loading, or none to be had).
      */
-    static boolean draw(GuiGraphicsExtractor graphics, Project project, int x, int y, int width, int height) {
-        String address = address(project);
+    static boolean draw(GuiGraphicsExtractor graphics, String thumbnail, String url, int x, int y, int width,
+                        int height) {
+        String address = address(thumbnail, url);
         if (address.isEmpty()) {
             return false;
         }

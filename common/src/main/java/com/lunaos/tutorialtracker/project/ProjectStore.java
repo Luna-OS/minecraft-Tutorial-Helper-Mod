@@ -112,6 +112,17 @@ public final class ProjectStore {
         return project;
     }
 
+    /** The project of an archive card, made again under the card's id so the two stay matched. */
+    public Project restore(ArchiveEntry entry) {
+        Project project = new Project();
+        project.id = entry.id;
+        project.created = System.currentTimeMillis();
+        entry.applyTo(project);
+        this.projects.add(project);
+        save(project);
+        return project;
+    }
+
     public void delete(Project project) {
         this.projects.remove(project);
         DiskWriter.delete(file(project));
