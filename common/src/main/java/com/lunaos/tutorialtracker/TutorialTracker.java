@@ -128,6 +128,8 @@ public final class TutorialTracker {
     public static void loadTutorial(Project project, String url, Consumer<String> done) {
         String normalized = TutorialFetcher.normalizeUrl(url);
         project.url = normalized;
+        // A new link is a new list: it goes into the archive even if the old one was taken out.
+        project.keepOutOfArchive = false;
         saveProject(project);
         TutorialFetcher.fetch(normalized).whenComplete((tutorial, error) -> Minecraft.getInstance().execute(() -> {
             if (error != null) {

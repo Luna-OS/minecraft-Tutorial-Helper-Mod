@@ -44,9 +44,10 @@ fremden Servern. Sie läuft unter Windows, macOS (Apple Silicon und Intel) und L
   Für genaue Positionen: Fenster anklicken, dann verschieben die Pfeiltasten (mit Shift 10 Pixel), mit Alt (Mac:
   Option) ändern sie die Größe. Klappt auch mit Trackpad und Retina-Display.
 - **Mehrere Projekte.** Jedes Tutorial ist ein eigenes Projekt mit eigener Liste und eigenen Kisten.
-- **Archiv.** Alle Projekte als Karten mit Vorschaubild, Name der Farm, Minecraft-Version und Anzahl der
-  Materialien (*B → Archiv*). Doppelklick öffnet ein Projekt, darunter kannst du Name und Version ändern oder es
-  löschen. Die Version erkennt die Mod beim Laden aus Titel oder Beschreibung des Videos.
+- **Archiv.** Jede geladene Liste als Karte mit Vorschaubild, Name der Farm, Minecraft-Version und Anzahl der
+  Materialien (*B → Archiv*). Das Archiv behält seine Karten, auch wenn du das Projekt löschst. Doppelklick oder
+  „Öffnen“ legt das Projekt wieder an. Darunter änderst du Name und Version, „Aus Archiv löschen“ entfernt nur die
+  Karte. Die Version erkennt die Mod beim Laden aus Titel oder Beschreibung des Videos.
 - **Mit Freunden teilen.** „Code kopieren“ legt Liste, Link und Version als kurzen Code in die Zwischenablage, der
   in eine Discord-Nachricht passt. Dein Freund kopiert die Nachricht und klickt im Archiv auf „Code einfügen“.
 - **Im Minecraft-Look, hell oder dunkel.** Graue Inventarfenster, Slots, die XP-Leiste als Fortschrittsbalken und
