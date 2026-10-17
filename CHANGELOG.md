@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0] – Minecraft 26.3
+
+- **Archiv:** Alle Projekte als Karten mit dem Vorschaubild des Videos, dem Namen der Farm, der Minecraft-Version
+  und der Anzahl der Materialien. Von dort lassen sie sich öffnen (Doppelklick), umbenennen, mit Version versehen
+  und löschen. Erreichbar über „Archiv“ im Menü (B) oder eine eigene Taste.
+- **Teilen per Code:** „Code kopieren“ legt das Projekt (Name, Link, Version, Materialliste) als kurzen Code in die
+  Zwischenablage, mit einigen hundert Zeichen klein genug für eine Discord-Nachricht. „Code einfügen“ liest so
+  einen Code wieder ein, auch wenn die ganze Nachricht kopiert wurde. Kisten werden nicht geteilt, sie gehören zu
+  deiner Welt.
+- Beim Laden eines Links merkt sich die Mod das Vorschaubild und erkennt die Minecraft-Version aus Titel oder
+  Beschreibung, zum Beispiel „1.21.4“ oder „[1.20]“.
+
 ## [1.3.0] – Minecraft 26.3
 
 - **Mehr FPS:**

@@ -128,5 +128,6 @@
   "screen.tutorialtracker.archive.copied": "Code copied (%s characters), now paste it into Discord or elsewhere",
   "screen.tutorialtracker.archive.imported": "Imported \"%s\"",
   "screen.tutorialtracker.archive.no_code": "No Tutorial Tracker code in the clipboard",
-  "screen.tutorialtracker.archive.active": "active"
+  "screen.tutorialtracker.archive.active": "active",
+  "screen.tutorialtracker.archive.deleted": "Deleted \"%s\""
 }

@@ -236,6 +236,8 @@ public class ArchiveScreen extends Screen {
                     TutorialTracker.setActiveProject(null);
                 }
                 this.selected = null;
+                setStatus(Component.translatable("screen.tutorialtracker.archive.deleted", displayName(project)),
+                    McStyle.LABEL);
             }
             this.minecraft.gui.setScreen(this);
         }, Component.translatable("screen.tutorialtracker.delete_project"),

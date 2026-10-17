@@ -128,5 +128,6 @@
   "screen.tutorialtracker.archive.copied": "Code kopiert (%s Zeichen), jetzt z. B. in Discord einfügen",
   "screen.tutorialtracker.archive.imported": "„%s“ importiert",
   "screen.tutorialtracker.archive.no_code": "Kein Tutorial-Tracker-Code in der Zwischenablage",
-  "screen.tutorialtracker.archive.active": "aktiv"
+  "screen.tutorialtracker.archive.active": "aktiv",
+  "screen.tutorialtracker.archive.deleted": "„%s“ gelöscht"
 }
