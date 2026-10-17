@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.1] – Minecraft 26.3
+
+- **Absturz beim Öffnen des Archivs behoben:** Große Vorschaubilder (Twitch liefert 2560×1440) brachten das Spiel
+  beim Dekodieren zum Absturz. Bilder werden jetzt so geladen wie Minecraft seine eigenen, sehr große werden
+  übersprungen, und von Twitch holt die Mod kleine Vorschaubilder (640×360).
+
 ## [1.5.0] – Minecraft 26.3
 
 - **Archiv mit eigenen Kopien:** Löschst du ein Projekt im Projektbereich, bleibt seine Liste im Archiv. „Öffnen“
