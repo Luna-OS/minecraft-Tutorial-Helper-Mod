@@ -204,20 +204,23 @@ public class SettingsScreen extends Screen {
         McStyle.label(graphics, this.font, this.title, this.panelX + 8, this.panelY + 8);
         // How the updater is doing, at the right of the title.
         Component update = switch (Updater.state()) {
-            case READY -> Component.translatable("settings.tutorialtracker.update.ready", Updater.newVersion());
+            case READY -> Updater.lastFailure() != null
+                ? Component.translatable("settings.tutorialtracker.update.retry", Updater.newVersion())
+                : Component.translatable("settings.tutorialtracker.update.ready", Updater.newVersion());
             case DOWNLOADING -> Component.translatable("settings.tutorialtracker.update.downloading",
                 Updater.newVersion());
             case CHECKING -> Component.translatable("settings.tutorialtracker.update.checking");
-            case UP_TO_DATE -> Component.translatable("settings.tutorialtracker.update.current");
-            case FAILED -> Component.translatable("settings.tutorialtracker.update.failed");
-            case OFF -> null;
+            case UP_TO_DATE -> Component.translatable("settings.tutorialtracker.update.current", Updater.version());
+            case FAILED -> Component.translatable("settings.tutorialtracker.update.failed", Updater.error());
+            case OFF -> Component.translatable("settings.tutorialtracker.update.version", Updater.version());
         };
         if (update != null) {
             int titleEnd = this.panelX + 8 + this.font.width(this.title) + 12;
             int room = this.panelX + this.panelWidth - 8 - titleEnd;
             String text = HudRenderer.ellipsize(this.font, update.getString(), room);
-            int color = Updater.state() == Updater.State.READY ? McStyle.DARK_GREEN
-                : Updater.state() == Updater.State.FAILED ? McStyle.DARK_RED : McStyle.LABEL_DISABLED;
+            int color = Updater.state() == Updater.State.READY && Updater.lastFailure() == null ? McStyle.DARK_GREEN
+                : Updater.state() == Updater.State.FAILED || Updater.lastFailure() != null ? McStyle.DARK_RED
+                : McStyle.LABEL_DISABLED;
             McStyle.label(graphics, this.font, text, this.panelX + this.panelWidth - 8 - this.font.width(text),
                 this.panelY + 8, color);
         }

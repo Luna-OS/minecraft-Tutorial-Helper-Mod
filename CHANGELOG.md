@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.4.1] – Minecraft 26.3
+
+- **Auto-Update unter Windows repariert:** Das Einsetzen der neuen Version beim Beenden läuft jetzt wie bei Luna
+  Map über ein kleines Skript, das bis zu drei Minuten wartet, bis Minecraft und der Launcher die alte Datei
+  freigeben. Vorher gab es nach 20 Sekunden auf.
+- Die Einstellungen zeigen jetzt die installierte Version und den Stand des Updates. Klappt das Einsetzen einmal
+  nicht, steht das dort, und beim nächsten Beenden wird es erneut versucht.
+- **Wichtig:** Wer 1.3.0 oder 1.4.0 hat, installiert 1.4.1 einmal von Hand. Ab dann aktualisiert sich die Mod selbst.
+
 ## [1.4.0] – Minecraft 26.3
 
 - **Archiv:** Alle Projekte als Karten mit dem Vorschaubild des Videos, dem Namen der Farm, der Minecraft-Version
